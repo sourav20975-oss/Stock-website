@@ -18,6 +18,7 @@ export default function Watchlist() {
   useEffect(() => {
     symbols.forEach(sym => {
       const handleTick = (tick) => {
+        if (tick?.isMarketOpen === false) return;
         setQuotes(prev => prev.map(q => {
           if (q.symbol === tick.symbol) {
             return {

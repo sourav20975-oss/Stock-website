@@ -158,7 +158,9 @@ export const marketDataService = {
               bookValue: Math.round(ltp * 0.35 * 100) / 100
             },
             updatedAt: new Date().toISOString(),
-            isRealLive: true
+            isRealLive: true,
+            isMarketOpen: this.getMarketStatus().isLive,
+            marketStatus: this.getMarketStatus().status
           };
 
           return stockObj;
@@ -497,6 +499,12 @@ export const marketDataService = {
   },
 
   simulateTick(symbol) {
+    const marketStatus = this.getMarketStatus();
+    // NEVER simulate or modify prices when market is closed!
+    if (!marketStatus.isLive) {
+      return null;
+    }
+
     const stock = runtimeStocks.find(s => s.symbol.toUpperCase() === symbol.toUpperCase());
     if (!stock) return null;
 

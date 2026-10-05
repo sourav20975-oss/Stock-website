@@ -40,6 +40,7 @@ export function setupSocketIO(httpServer) {
       // Immediately send current quote
       try {
         const quote = await marketDataService.getStockQuote(cleanSymbol);
+        const marketStatus = marketDataService.getMarketStatus();
         if (quote) {
           socket.emit('stock:update', {
             symbol: quote.symbol,
@@ -49,6 +50,8 @@ export function setupSocketIO(httpServer) {
             volume: quote.volume,
             high: quote.high,
             low: quote.low,
+            isMarketOpen: marketStatus.isLive,
+            marketStatus: marketStatus.status,
             timestamp: Date.now()
           });
         }
@@ -85,9 +88,18 @@ export function setupSocketIO(httpServer) {
     });
   });
 
-  // Background ticker for actively subscribed stocks ONLY
-  setInterval(() => {
+  // Background ticker for actively subscribed stocks
+  // STRICT RULE: Only active during live continuous trading (09:15 AM - 03:30 PM IST Mon-Fri).
+  // When market is closed, stock prices on NSE / BSE are frozen at their closing price.
+  setInterval(async () => {
     if (activeSubscriptions.size === 0) return;
+
+    const marketStatus = marketDataService.getMarketStatus();
+    if (!marketStatus.isLive) {
+      // Market is closed (after 3:30 PM, before 9:15 AM, or weekend)
+      // Stock prices DO NOT change on the exchange. NEVER emit simulated price fluctuations!
+      return;
+    }
 
     activeSubscriptions.forEach((subscribers, symbol) => {
       if (subscribers.size > 0) {
@@ -95,12 +107,14 @@ export function setupSocketIO(httpServer) {
         if (update) {
           io.to(`stock:${symbol}`).emit('stock:update', {
             ...update,
+            isMarketOpen: true,
+            marketStatus: marketStatus.status,
             timestamp: Date.now()
           });
         }
       }
     });
-  }, 1500);
+  }, 2500);
 
   return io;
 }

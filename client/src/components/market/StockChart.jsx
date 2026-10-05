@@ -28,11 +28,13 @@ import {
 import { api } from '../../services/api';
 import { socketService } from '../../services/socket';
 import { useTheme } from '../../context/ThemeContext';
+import { getIndianMarketStatus } from '../../utils/marketTiming';
 
-export default function StockChart({ symbol, currentPrice }) {
+export default function StockChart({ symbol, currentPrice, isMarketOpen: propIsMarketOpen }) {
   const cleanSymbol = (symbol || 'TCS').toUpperCase();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const isMarketOpen = propIsMarketOpen !== undefined ? propIsMarketOpen : getIndianMarketStatus().isOpen;
 
   // Chart configuration state
   const [timeframe, setTimeframe] = useState('1m');
@@ -521,6 +523,8 @@ export default function StockChart({ symbol, currentPrice }) {
     const intervalSec = currentTfObj.seconds;
 
     const handleTick = (tick) => {
+      // If market is closed or tick says market not open, do not alter candles
+      if (!isMarketOpen || tick?.isMarketOpen === false) return;
       if (!tick || !tick.ltp || !mainSeriesRef.current || candlesRef.current.length === 0) return;
 
       const newPrice = Number(tick.ltp);
@@ -974,10 +978,12 @@ export default function StockChart({ symbol, currentPrice }) {
             width: '6px',
             height: '6px',
             borderRadius: '50%',
-            backgroundColor: '#089981',
-            boxShadow: '0 0 6px #089981'
+            backgroundColor: isMarketOpen ? '#089981' : '#94a3b8',
+            boxShadow: isMarketOpen ? '0 0 6px #089981' : 'none'
           }} />
-          <span style={{ color: 'var(--text)', fontWeight: 600 }}>LIVE</span>
+          <span style={{ color: isMarketOpen ? 'var(--text)' : 'var(--text-muted)', fontWeight: 600 }}>
+            {isMarketOpen ? 'LIVE' : 'CLOSED (3:30 PM)'}
+          </span>
         </div>
 
         {hoverData && (

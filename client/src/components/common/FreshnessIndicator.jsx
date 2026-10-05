@@ -25,6 +25,8 @@ export default function FreshnessIndicator({ timestamp, isLive = true, label = '
     return () => clearInterval(interval);
   }, [timestamp]);
 
+  const displayLabel = label || (isLive ? 'Live' : 'Market Closed');
+
   return (
     <div style={{
       display: 'inline-flex',
@@ -37,10 +39,11 @@ export default function FreshnessIndicator({ timestamp, isLive = true, label = '
         width: '6px',
         height: '6px',
         borderRadius: '50%',
-        backgroundColor: isLive ? 'var(--positive)' : 'var(--text-muted)',
+        backgroundColor: isLive ? 'var(--positive)' : '#94a3b8',
+        boxShadow: isLive ? '0 0 6px rgba(8, 153, 129, 0.4)' : 'none',
         display: 'inline-block'
       }} />
-      <span>{label || (isLive ? 'Live' : 'Cached')} • {timeAgo}</span>
+      <span>{displayLabel} • {timeAgo}</span>
     </div>
   );
 }

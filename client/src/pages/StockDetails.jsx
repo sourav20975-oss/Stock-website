@@ -30,6 +30,7 @@ import { socketService } from '../services/socket';
 import { useWatchlist } from '../context/WatchlistContext';
 import StockChart from '../components/market/StockChart';
 import FreshnessIndicator from '../components/common/FreshnessIndicator';
+import { getIndianMarketStatus } from '../utils/marketTiming';
 
 // Line-by-Line Executive Research Report Formatter
 function FormattedResearchReport({ rawText }) {
@@ -273,12 +274,27 @@ export default function StockDetails() {
     totalSellQty: 142180
   });
 
+  // Accurate Indian Market Session State (Asia/Kolkata)
+  const [marketSession, setMarketSession] = useState(getIndianMarketStatus());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMarketSession(getIndianMarketStatus());
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Fetch initial stock data
   useEffect(() => {
     fetchStockDetails();
 
     // Subscribe to live websocket updates
     const handleLiveTick = (tick) => {
+      // STRICT CHECK: If market is closed or tick says market not open, DO NOT alter prices or flash!
+      if (tick?.isMarketOpen === false || !getIndianMarketStatus().isOpen) {
+        return;
+      }
+
       setStock(prev => {
         if (!prev) return prev;
         const dir = tick.ltp >= prev.ltp ? 'up' : 'down';
@@ -573,19 +589,25 @@ export default function StockDetails() {
                   {stock.exchange}:EQ
                 </span>
                 <span style={{
-                  backgroundColor: 'var(--positive-bg)',
-                  border: '1px solid var(--positive-border)',
-                  padding: '2px 6px',
+                  backgroundColor: marketSession.badgeBg,
+                  border: `1px solid ${marketSession.badgeBorder}`,
+                  padding: '2px 8px',
                   borderRadius: '4px',
                   fontSize: '10px',
                   fontWeight: 700,
-                  color: 'var(--positive)',
+                  color: marketSession.color,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px'
+                  gap: '5px'
                 }}>
-                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--positive)' }} />
-                  MARKET OPEN
+                  <span style={{ 
+                    width: '6px', 
+                    height: '6px', 
+                    borderRadius: '50%', 
+                    backgroundColor: marketSession.color,
+                    boxShadow: marketSession.isOpen ? '0 0 6px var(--positive)' : 'none'
+                  }} />
+                  {marketSession.label.toUpperCase()}
                 </span>
                 <button
                   onClick={() => toggleWatchlist(stock.symbol)}
@@ -637,7 +659,11 @@ export default function StockDetails() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
-                <FreshnessIndicator timestamp={stock.updatedAt} isLive={true} />
+                <FreshnessIndicator 
+                  timestamp={stock.updatedAt} 
+                  isLive={marketSession.isOpen} 
+                  label={marketSession.isOpen ? 'Live' : 'Market Closed'} 
+                />
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing || cooldownSeconds > 0}
@@ -723,7 +749,7 @@ export default function StockDetails() {
       }} className="stock-layout-grid">
         {/* Left Column: Pro Trading Chart */}
         <div>
-          <StockChart symbol={stock.symbol} currentPrice={stock.ltp} />
+          <StockChart symbol={stock.symbol} currentPrice={stock.ltp} isMarketOpen={marketSession.isOpen} />
         </div>
 
         {/* Right Column: Authentic Level 2 Depth & Performance Ranges */}
@@ -748,8 +774,21 @@ export default function StockDetails() {
               color: 'var(--text)'
             }}>
               <span>MARKET DEPTH (L2)</span>
-              <span style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: 600 }}>
-                NSE Real-time
+              <span style={{ 
+                fontSize: '10px', 
+                color: marketSession.isOpen ? 'var(--primary)' : 'var(--text-muted)', 
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <span style={{
+                  width: '5px',
+                  height: '5px',
+                  borderRadius: '50%',
+                  backgroundColor: marketSession.isOpen ? 'var(--positive)' : '#94a3b8'
+                }} />
+                {marketSession.isOpen ? 'NSE Real-time' : 'Closed • 3:30 PM Snapshot'}
               </span>
             </div>
 
@@ -859,6 +898,21 @@ export default function StockDetails() {
                   <div style={{ width: `${100 - buyRatio}%`, backgroundColor: '#f23645', transition: 'width 0.4s ease' }} />
                 </div>
               </div>
+
+              {!marketSession.isOpen && (
+                <div style={{
+                  marginTop: '8px',
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: 'var(--surface-secondary)',
+                  border: '1px solid var(--border)',
+                  fontSize: '10px',
+                  color: 'var(--text-muted)',
+                  textAlign: 'center'
+                }}>
+                  🔒 Order matching closed at 03:30 PM IST. Order discovery resumes tomorrow at 09:00 AM.
+                </div>
+              )}
             </div>
           </div>
 
