@@ -1,0 +1,327 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* High-Performance Light Mode Tokens (Institutional Bloomberg / Apple Finance) */
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-secondary: #F1F5F9;
+  --surface-tertiary: #E2E8F0;
+  --border: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  --text: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  
+  --primary: #0284C7;
+  --primary-hover: #0369A1;
+  --primary-subtle: #E0F2FE;
+
+  --positive: #059669;
+  --positive-bg: #ECFDF5;
+  --positive-border: #A7F3D0;
+
+  --negative: #E11D48;
+  --negative-bg: #FFF1F2;
+  --negative-border: #FECDD3;
+
+  --warning: #D97706;
+  --warning-bg: #FFFBEB;
+  --warning-border: #FDE68A;
+
+  --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --table-hover: #F8FAFC;
+  --kpi-glow: rgba(2, 132, 199, 0.06);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --header-height: 64px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 68px;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme='light'] {
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-secondary: #F1F5F9;
+  --surface-tertiary: #E2E8F0;
+  --border: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  --text: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  
+  --primary: #0284C7;
+  --primary-hover: #0369A1;
+  --primary-subtle: #E0F2FE;
+
+  --positive: #059669;
+  --positive-bg: #ECFDF5;
+  --positive-border: #A7F3D0;
+
+  --negative: #E11D48;
+  --negative-bg: #FFF1F2;
+  --negative-border: #FECDD3;
+
+  --warning: #D97706;
+  --warning-bg: #FFFBEB;
+  --warning-border: #FDE68A;
+
+  --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --table-hover: #F8FAFC;
+  --kpi-glow: rgba(2, 132, 199, 0.06);
+}
+
+[data-theme='dark'] {
+  /* High-Performance Dark Mode Tokens (TradingView Pro / Angel One Terminal) */
+  --background: #0B0E14;
+  --surface: #131722;
+  --surface-secondary: #1A1F2C;
+  --surface-tertiary: #252B3B;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --text: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+
+  --primary: #38BDF8;
+  --primary-hover: #0EA5E9;
+  --primary-subtle: rgba(56, 189, 248, 0.12);
+
+  --positive: #089981;
+  --positive-bg: rgba(8, 153, 129, 0.12);
+  --positive-border: rgba(8, 153, 129, 0.3);
+
+  --negative: #F23645;
+  --negative-bg: rgba(242, 54, 69, 0.12);
+  --negative-border: rgba(242, 54, 69, 0.3);
+
+  --warning: #EAB308;
+  --warning-bg: rgba(234, 179, 8, 0.12);
+  --warning-border: rgba(234, 179, 8, 0.3);
+
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --table-hover: rgba(56, 189, 248, 0.04);
+  --kpi-glow: rgba(56, 189, 248, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Financial Tabular Numbers */
+.num, .tabular-nums, .price-val {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Semantic Badges */
+.badge-pos {
+  background-color: var(--positive-bg);
+  color: var(--positive);
+  border: 1px solid var(--positive-border);
+}
+
+.badge-neg {
+  background-color: var(--negative-bg);
+  color: var(--negative);
+  border: 1px solid var(--negative-border);
+}
+
+.badge-warn {
+  background-color: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
+
+/* Financial Buttons */
+.btn-primary {
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--surface-secondary);
+  border-color: var(--text-muted);
+}
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Card Surface */
+.terminal-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* Financial Data Tables */
+.terminal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.terminal-table th {
+  background-color: var(--surface-secondary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.terminal-table th.num-col, .terminal-table td.num-col {
+  text-align: right;
+}
+.terminal-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text);
+  white-space: nowrap;
+}
+.terminal-table tr:hover td {
+  background-color: var(--surface-secondary);
+}
+
+/* Sidebar Navigation Items */
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: transparent;
+  border-left: 3px solid transparent;
+  margin-bottom: 2px;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+
+.sidebar-nav-link:hover {
+  background-color: var(--surface-secondary);
+  color: var(--text);
+}
+
+.sidebar-nav-link.active {
+  font-weight: 600;
+  color: var(--primary);
+  background-color: var(--primary-subtle);
+  border-left: 3px solid var(--primary);
+}
+
+.sidebar-nav-link.active:hover {
+  background-color: var(--primary-subtle);
+  color: var(--primary);
+}
+
+/* Responsive Grid Helpers */
+.grid-cols-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Glass & Card Transitions */
+.interactive-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  border-color: var(--primary);
+}

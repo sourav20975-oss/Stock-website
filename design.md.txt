@@ -1,0 +1,1330 @@
+# Stock Knowledge SaaS — Design System
+
+## 1. Design Direction
+
+Create a **professional Indian stock-market research platform** inspired by the usability and information density of established brokerage platforms such as Angel One, Dhan, Zerodha, and institutional market terminals.
+
+The design must feel like a real financial product.
+
+### Do NOT use
+
+* Glassmorphism
+* Excessive transparency
+* Huge gradients
+* Neon backgrounds
+* Floating glowing cards
+* Purple AI gradients
+* Excessive rounded cards
+* Futuristic sci-fi UI
+* Excessive animations
+* Giant hero sections
+* AI-generated-looking dashboards
+
+### Use
+
+* Solid surfaces
+* Clear borders
+* Compact spacing
+* Strong typography
+* Dense financial tables
+* Tabular numbers
+* Professional charts
+* Clear positive/negative states
+* Consistent navigation
+* Practical buttons
+* Subtle shadows only where useful
+* Responsive layouts
+
+---
+
+# 2. Design Personality
+
+Keywords:
+
+```text
+Professional
+Financial
+Reliable
+Fast
+Precise
+Dense
+Modern
+Indian
+Data-first
+Trustworthy
+```
+
+The interface should communicate:
+
+> "This is a serious financial research application."
+
+Not:
+
+> "This is an AI experiment."
+
+---
+
+# 3. Color System
+
+Do not hard-code colors throughout the application.
+
+Create semantic design tokens.
+
+## Light Mode
+
+```text
+Background
+#F7F8FA
+
+Primary Surface
+#FFFFFF
+
+Secondary Surface
+#F1F3F5
+
+Border
+#E2E5E9
+
+Primary Text
+#17191C
+
+Secondary Text
+#626870
+
+Muted Text
+#8A9098
+
+Primary Accent
+#2563EB
+
+Positive
+#15803D
+
+Positive Background
+#EAF7EF
+
+Negative
+#DC2626
+
+Negative Background
+#FDECEC
+
+Warning
+#B7791F
+
+Warning Background
+#FFF7E6
+```
+
+## Dark Mode
+
+```text
+Background
+#0D0F12
+
+Primary Surface
+#15181D
+
+Secondary Surface
+#1B1F25
+
+Border
+#292E36
+
+Primary Text
+#F3F4F6
+
+Secondary Text
+#A7ADB6
+
+Muted Text
+#737A84
+
+Primary Accent
+#4F8DF7
+
+Positive
+#22C55E
+
+Positive Background
+#10281A
+
+Negative
+#EF4444
+
+Negative Background
+#2A1214
+
+Warning
+#EAB308
+
+Warning Background
+#2A240D
+```
+
+Avoid pure black backgrounds and pure white text.
+
+---
+
+# 4. Typography
+
+Use a clean UI font.
+
+Recommended:
+
+```text
+Inter
+```
+
+Fallback:
+
+```text
+system-ui
+-apple-system
+BlinkMacSystemFont
+Segoe UI
+sans-serif
+```
+
+Financial numbers should use:
+
+```text
+font-variant-numeric: tabular-nums;
+```
+
+Example:
+
+```text
+₹3,421.25
++1.42%
+42,42,100
+```
+
+Numbers should align visually.
+
+---
+
+# 5. Layout
+
+Desktop:
+
+```text
++----------------------------------------------------------+
+| Logo | Search                  | Market | Watchlist | 👤 |
++------+---------------------------------------------------+
+|      |                                                   |
+| Side |                Main Content                      |
+| bar  |                                                   |
+|      |                                                   |
+|      |                                                   |
++------+---------------------------------------------------+
+```
+
+Mobile:
+
+```text
++--------------------------------+
+| ☰  Stock Knowledge       👤    |
++--------------------------------+
+| Search stocks / IPOs...        |
++--------------------------------+
+|                                |
+| Main content                   |
+|                                |
++--------------------------------+
+| Home | Markets | IPO | AI | Me |
++--------------------------------+
+```
+
+Desktop sidebar can collapse.
+
+Mobile should use bottom navigation.
+
+---
+
+# 6. Global Header
+
+Desktop:
+
+```text
+┌───────────────────────────────────────────────────────────┐
+│ SK  Stock Knowledge    🔍 Search stocks, IPOs...          │
+│                         Markets  IPOs  Watchlist  AI  👤  │
+└───────────────────────────────────────────────────────────┘
+```
+
+Characteristics:
+
+* Height: 64px
+* Solid background
+* Bottom border
+* No transparency
+* No blur
+* Sticky
+* Search centered
+* Compact navigation
+
+---
+
+# 7. Sidebar
+
+Desktop sidebar:
+
+```text
+Dashboard
+
+MARKETS
+  Market Overview
+  Gainers
+  Losers
+  Indices
+
+RESEARCH
+  Stocks
+  IPOs
+  News
+
+PERSONAL
+  Watchlist
+  AI Research
+
+SYSTEM
+  Settings
+```
+
+Use Lucide icons.
+
+Examples:
+
+```text
+LayoutDashboard
+TrendingUp
+TrendingDown
+BarChart3
+Search
+Rocket
+Newspaper
+Star
+Bot
+Settings
+```
+
+Active navigation:
+
+```text
+Background: subtle accent tint
+Text: accent
+Left border or small indicator
+```
+
+Avoid giant colored navigation blocks.
+
+---
+
+# 8. Dashboard
+
+Desktop dashboard:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ Good morning, Sourav                                       │
+│ Market overview                                             │
+├──────────────┬──────────────┬──────────────┬───────────────┤
+│ NIFTY 50     │ BANK NIFTY   │ SENSEX       │ Market Status │
+│ 25,xxx       │ 58,xxx       │ 82,xxx       │ ● Open        │
+│ +0.82%       │ +0.41%       │ +0.73%       │ Updated ...   │
+├──────────────┴──────────────┴──────────────┴───────────────┤
+│ Market Movers                                               │
+│                                                             │
+│ Gainers                     Losers                          │
+│ TCS             +2.31%      XYZ             -2.41%         │
+│ INFY            +1.84%      ABC             -1.82%         │
+│ RELIANCE        +1.41%      DEF             -1.51%         │
+├─────────────────────────────────────────────────────────────┤
+│ Upcoming IPOs                                               │
+│                                                             │
+│ Company       Price       GMP       Dates       Status       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Use compact cards.
+
+Do not turn every section into a floating glass card.
+
+---
+
+# 9. Stock Detail Page
+
+Route:
+
+```text
+/stocks/:symbol
+```
+
+Header:
+
+```text
+TCS
+Tata Consultancy Services
+
+NSE
+
+₹3,421.25
++48.20 (+1.42%)
+
+● Market Open
+
+[ Refresh ]
+```
+
+The refresh button should show:
+
+```text
+Refresh
+Refreshing...
+Updated 12 sec ago
+```
+
+---
+
+# 10. Stock Chart
+
+Use a professional financial chart.
+
+Recommended:
+
+```text
+Lightweight Charts
+```
+
+Controls:
+
+```text
+1D
+1W
+1M
+3M
+6M
+1Y
+5Y
+```
+
+Optional:
+
+```text
+Candles
+Line
+```
+
+Do not add unnecessary animated chart effects.
+
+Chart should have:
+
+* subtle grid
+* readable axis
+* tooltip
+* crosshair
+* volume
+* responsive resizing
+
+---
+
+# 11. Stock Statistics
+
+Use a dense grid:
+
+```text
+Open              ₹3,390.00
+Previous Close    ₹3,373.05
+
+Day High          ₹3,438.50
+Day Low           ₹3,375.20
+
+52W High          ₹4,592.25
+52W Low           ₹3,056.00
+
+Volume            42.42L
+Market Cap        ₹12.4T
+```
+
+Desktop:
+
+```text
+┌──────────────┬──────────────┬──────────────┐
+│ Open         │ Day High     │ Day Low      │
+│ ₹3,390       │ ₹3,438       │ ₹3,375       │
+├──────────────┼──────────────┼──────────────┤
+│ 52W High     │ 52W Low      │ Volume       │
+│ ₹4,592       │ ₹3,056       │ 42.42L       │
+└──────────────┴──────────────┴──────────────┘
+```
+
+---
+
+# 12. Price Colors
+
+Use semantic colors.
+
+Positive:
+
+```text
++1.42%
+▲
+```
+
+Negative:
+
+```text
+-1.42%
+▼
+```
+
+Neutral:
+
+```text
+0.00%
+```
+
+Never use green/red as decorative colors.
+
+They should communicate financial movement.
+
+---
+
+# 13. Refresh Interaction
+
+Primary button:
+
+```text
+↻ Refresh
+```
+
+When clicked:
+
+```text
+↻ Refreshing...
+```
+
+After success:
+
+```text
+✓ Updated just now
+```
+
+After error:
+
+```text
+Unable to refresh
+Try again
+```
+
+Cooldown:
+
+```text
+Refresh available in 12s
+```
+
+Do not use a huge loading animation.
+
+A small spinner is enough.
+
+---
+
+# 14. IPO Page
+
+Route:
+
+```text
+/ipos
+```
+
+Tabs:
+
+```text
+Upcoming
+Open
+Recently Listed
+Closed
+```
+
+IPO table:
+
+```text
+Company       Price Band    Lot     GMP       Dates       Status
+───────────────────────────────────────────────────────────────
+ABC Tech      ₹420–440      34      ₹85       10–12 Oct   Open
+XYZ Finance   ₹280–295      50      ₹42       14–16 Oct   Upcoming
+```
+
+Desktop should use a table.
+
+Mobile should transform rows into compact cards.
+
+---
+
+# 15. IPO Detail
+
+Header:
+
+```text
+ABC Technologies
+
+₹420 – ₹440
+Issue Size ₹1,250 Cr
+
+10 Oct – 12 Oct
+
+[ Refresh Data ]
+```
+
+Then:
+
+```text
+IPO Overview
+Financials
+Subscription
+GMP
+Important Dates
+Objects of Issue
+Risks
+News
+AI Research
+```
+
+---
+
+# 16. GMP Design
+
+GMP must have an explicit label:
+
+```text
+Grey Market Premium
+Unofficial / Indicative
+```
+
+Example:
+
+```text
+GMP
+₹85
+
+~19.3%
+
+Updated 11 minutes ago
+
+Source: [Source Name]
+```
+
+Never visually present GMP as an official exchange price.
+
+Use a subtle warning/info indicator.
+
+---
+
+# 17. Subscription Section
+
+```text
+Subscription
+
+Retail        4.82x
+NII           8.31x
+QIB           12.42x
+Employee      1.72x
+Overall       7.61x
+```
+
+Use horizontal progress bars sparingly.
+
+Tables are preferred when exact values matter.
+
+---
+
+# 18. IPO Financials
+
+Use a financial table:
+
+```text
+Metric             FY23       FY24       FY25
+Revenue            ₹820 Cr    ₹1,020 Cr  ₹1,240 Cr
+Profit             ₹72 Cr     ₹91 Cr     ₹118 Cr
+EPS                ₹8.20      ₹10.10     ₹12.30
+Debt               ₹210 Cr    ₹190 Cr    ₹150 Cr
+```
+
+Avoid giant financial cards.
+
+---
+
+# 19. News
+
+News layout:
+
+```text
+┌───────────────────────────────────────────────┐
+│ TCS wins major contract...                    │
+│ Reuters · 24 min ago                          │
+├───────────────────────────────────────────────┤
+│ IT stocks rise as...                           │
+│ Economic Times · 1h ago                       │
+└───────────────────────────────────────────────┘
+```
+
+Use source + timestamp prominently.
+
+---
+
+# 20. AI Research Interface
+
+AI should look like a secondary research tool, not the entire UI.
+
+Header:
+
+```text
+AI Research
+```
+
+Input:
+
+```text
+Ask about a stock, IPO or market...
+
+                              [ Ask ]
+```
+
+Suggested prompts:
+
+```text
+Explain this company
+Compare with competitors
+Explain the recent price movement
+Explain this IPO
+What are the key risks?
+Summarize recent news
+```
+
+AI response should use structured sections:
+
+```text
+Summary
+
+Business
+
+Financials
+
+Market Position
+
+Recent Developments
+
+Potential Risks
+
+GMP Context
+
+What to Research Next
+```
+
+Avoid giant chat bubbles.
+
+---
+
+# 21. AI Source Citations
+
+Where possible, show:
+
+```text
+Sources
+
+NSE
+Angel One
+Company filing
+Economic Times
+Reuters
+```
+
+Use small source labels.
+
+AI should not appear to invent data.
+
+---
+
+# 22. Watchlist
+
+Desktop:
+
+```text
+My Watchlist
+
+Symbol       Price       Change       Last Updated
+TCS          ₹3,421      +1.42%       11:32:04
+INFY         ₹1,523      -0.41%       11:32:02
+RELIANCE     ₹2,942      +0.82%       11:32:03
+```
+
+Use a star icon.
+
+Mobile:
+
+```text
+★ TCS
+₹3,421.25
++1.42%
+```
+
+---
+
+# 23. Mobile Design
+
+The site must be fully responsive.
+
+Breakpoints:
+
+```text
+Mobile:
+< 640px
+
+Tablet:
+640px – 1024px
+
+Desktop:
+> 1024px
+```
+
+Mobile priorities:
+
+```text
+Header
+Search
+Main content
+Important data
+Charts
+Tables converted to cards
+Bottom navigation
+```
+
+Avoid horizontal page scrolling.
+
+Charts may use local horizontal scrolling if absolutely necessary.
+
+---
+
+# 24. Mobile Bottom Navigation
+
+```text
+┌─────────────────────────────────────┐
+│ Home   Markets   IPO   AI   Watch   │
+└─────────────────────────────────────┘
+```
+
+Icons:
+
+```text
+Home
+ChartCandlestick
+Rocket
+Bot
+Star
+```
+
+Keep labels visible.
+
+---
+
+# 25. Dark Mode
+
+Dark mode should not simply invert colors.
+
+Dark mode surfaces:
+
+```text
+Page       #0D0F12
+Panel      #15181D
+Nested     #1B1F25
+Border     #292E36
+```
+
+Maintain strong hierarchy through:
+
+```text
+surface difference
+border
+typography
+spacing
+```
+
+not glow.
+
+---
+
+# 26. Light Mode
+
+Light mode:
+
+```text
+Page       #F7F8FA
+Panel      #FFFFFF
+Nested     #F1F3F5
+Border     #E2E5E9
+```
+
+The interface should feel similar to a professional finance terminal.
+
+---
+
+# 27. Theme Toggle
+
+Location:
+
+```text
+Header → Theme button
+```
+
+States:
+
+```text
+☀ Light
+🌙 Dark
+```
+
+Prefer system theme on first visit.
+
+Persist user choice.
+
+---
+
+# 28. Cards
+
+Cards should be restrained.
+
+Use:
+
+```text
+border: 1px solid
+border-radius: 8px
+background: surface
+```
+
+Avoid:
+
+```text
+border-radius: 30px
+backdrop-filter
+blur
+gradient
+glow
+```
+
+Recommended radius:
+
+```text
+Buttons: 6px
+Inputs: 6px
+Cards: 8px
+Tables: 8px
+```
+
+---
+
+# 29. Buttons
+
+Primary:
+
+```text
+[ Refresh ]
+```
+
+Secondary:
+
+```text
+[ View Details ]
+```
+
+Destructive:
+
+```text
+[ Remove ]
+```
+
+Buttons should be compact and functional.
+
+No oversized pill buttons.
+
+---
+
+# 30. Tables
+
+Tables should feel like financial software.
+
+Characteristics:
+
+* compact rows
+* subtle borders
+* right-aligned numbers
+* sticky headers where useful
+* hover state
+* clear sorting
+* responsive mobile transformation
+
+Example:
+
+```text
+Symbol     LTP          Change       Volume
+TCS        ₹3,421.25    +1.42%       42.42L
+INFY       ₹1,523.10    -0.41%       31.21L
+```
+
+Numbers should be right aligned.
+
+---
+
+# 31. Empty States
+
+Example:
+
+```text
+No stocks in your watchlist
+
+Add stocks to track their
+price and performance.
+
+[ Search Stocks ]
+```
+
+Do not use giant illustrations.
+
+---
+
+# 32. Loading States
+
+Use skeletons:
+
+```text
+████████████
+████████
+████████████████
+```
+
+Avoid full-page spinners.
+
+---
+
+# 33. Error States
+
+Example:
+
+```text
+Unable to fetch market data
+
+The market-data provider did not respond.
+
+[ Try Again ]
+```
+
+Never expose:
+
+```text
+AxiosError
+ECONNRESET
+500 Internal Server Error
+```
+
+directly to users.
+
+---
+
+# 34. Data Freshness
+
+Every dynamic data section should expose freshness.
+
+Examples:
+
+```text
+Updated just now
+Updated 42 sec ago
+Updated 8 min ago
+Updated yesterday
+```
+
+Status:
+
+```text
+● Live
+● Cached
+● Stale
+```
+
+Use subtle semantic colors.
+
+---
+
+# 35. Responsive Stock Page
+
+Desktop:
+
+```text
++------------------------------------------------------+
+| TCS                         ₹3,421.25  +1.42%         |
++------------------------------------------------------+
+|                                                      |
+|                 PRICE CHART                          |
+|                                                      |
++---------------------------+--------------------------+
+| Statistics                | Company Overview        |
++---------------------------+--------------------------+
+| News                      | AI Research             |
++---------------------------+--------------------------+
+```
+
+Mobile:
+
+```text
+TCS
+₹3,421.25
++1.42%
+
+[ Refresh ]
+
+1D  1W  1M  6M  1Y
+
+[ Chart ]
+
+Statistics
+
+Open       ₹3,390
+High       ₹3,438
+Low        ₹3,375
+
+Company
+
+News
+
+AI Research
+```
+
+---
+
+# 36. Accessibility
+
+Must support:
+
+* keyboard navigation
+* visible focus states
+* semantic buttons
+* accessible labels
+* sufficient contrast
+* readable font sizes
+* screen-reader labels
+* reduced motion preference
+
+Never make information dependent on hover.
+
+---
+
+# 37. Animation
+
+Keep animation minimal.
+
+Allowed:
+
+```text
+button loading
+skeleton
+small dropdown transition
+tab transition
+chart tooltip
+```
+
+Avoid:
+
+```text
+floating cards
+glowing borders
+background particles
+scrolling gradients
+3D animations
+large entrance animations
+```
+
+Finance software should feel fast.
+
+---
+
+# 38. Design Tokens
+
+Create:
+
+```text
+--background
+--surface
+--surface-secondary
+--border
+--text
+--text-secondary
+--text-muted
+
+--primary
+--primary-hover
+
+--positive
+--positive-bg
+
+--negative
+--negative-bg
+
+--warning
+--warning-bg
+
+--radius-sm
+--radius-md
+--radius-lg
+
+--header-height
+--sidebar-width
+```
+
+All components must consume these tokens.
+
+---
+
+# 39. Component Structure
+
+Recommended React structure:
+
+```text
+src/
+├── components/
+│   ├── layout/
+│   │   ├── Header.jsx
+│   │   ├── Sidebar.jsx
+│   │   ├── MobileNav.jsx
+│   │   └── PageContainer.jsx
+│   │
+│   ├── market/
+│   │   ├── MarketCard.jsx
+│   │   ├── MarketStatus.jsx
+│   │   ├── StockQuote.jsx
+│   │   ├── StockChart.jsx
+│   │   └── MarketTable.jsx
+│   │
+│   ├── ipo/
+│   │   ├── IPOCard.jsx
+│   │   ├── IPOTable.jsx
+│   │   ├── GMPBadge.jsx
+│   │   ├── SubscriptionTable.jsx
+│   │   └── IPOFinancials.jsx
+│   │
+│   ├── ai/
+│   │   ├── AIResearch.jsx
+│   │   ├── AIMessage.jsx
+│   │   └── PromptSuggestions.jsx
+│   │
+│   ├── watchlist/
+│   │   └── WatchlistTable.jsx
+│   │
+│   └── common/
+│       ├── Button.jsx
+│       ├── Skeleton.jsx
+│       ├── EmptyState.jsx
+│       ├── ErrorState.jsx
+│       └── FreshnessIndicator.jsx
+│
+├── pages/
+│   ├── Dashboard.jsx
+│   ├── StockDetails.jsx
+│   ├── IPOList.jsx
+│   ├── IPODetails.jsx
+│   ├── Market.jsx
+│   ├── Watchlist.jsx
+│   ├── AIResearch.jsx
+│   └── Settings.jsx
+│
+├── hooks/
+│   ├── useStock.jsx
+│   ├── useWebSocket.jsx
+│   ├── useTheme.jsx
+│   └── useRefresh.jsx
+│
+├── store/
+│   └── marketStore.js
+│
+└── services/
+    ├── api.js
+    └── socket.js
+```
+
+---
+
+# 40. UX Rules
+
+### Rule 1
+
+Important financial information must be visible without opening multiple dialogs.
+
+### Rule 2
+
+Numbers must be easy to scan.
+
+### Rule 3
+
+Every dynamic number should have a freshness indicator where relevant.
+
+### Rule 4
+
+Positive/negative colors should have semantic meaning.
+
+### Rule 5
+
+AI should support the financial product, not visually dominate it.
+
+### Rule 6
+
+Charts should be functional rather than decorative.
+
+### Rule 7
+
+Tables should be used when comparing exact financial numbers.
+
+### Rule 8
+
+Mobile should not be a scaled-down desktop.
+
+### Rule 9
+
+Dark and light themes must both feel intentionally designed.
+
+### Rule 10
+
+Never sacrifice readability for visual effects.
+
+---
+
+# 41. Final Visual Target
+
+The final application should feel approximately like:
+
+```text
+Professional brokerage UI
+        +
+Market research terminal
+        +
+IPO research platform
+        +
+Modern SaaS usability
+        +
+Subtle AI assistance
+```
+
+The visual language should be:
+
+```text
+Solid surfaces
+Thin borders
+Compact spacing
+Strong typography
+Professional blue accent
+Green/red financial semantics
+Clean charts
+Dense tables
+Minimal animation
+Excellent responsive behavior
+```
+
+The final result should look like a **real financial product**, not an AI-generated template.

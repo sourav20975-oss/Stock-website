@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment Variables & Sensitive Credentials
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+*.env
+
+# Production Build Outputs
+dist/
+dist-ssr/
+build/
+out/
+
+# Logs & Debugging
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Operating System & Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary Cache
+.cache/
+.eslintcache
+tmp/
+temp/
