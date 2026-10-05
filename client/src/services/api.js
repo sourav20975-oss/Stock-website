@@ -38,6 +38,7 @@ export const api = {
   getMarketStatus: () => request('/market/status'),
   getFiiDii: () => request('/market/fii-dii'),
   getGlobalMarkets: () => request('/market/global'),
+  getSectoralRibbon: () => request('/market/sectors'),
   getSectorHeatmap: () => request('/market/heatmap'),
   getCorporateCalendar: (type = 'all') => request(`/market/calendar?type=${type}`),
   getScreener: (preset = 'all') => request(`/market/screener?preset=${preset}`),

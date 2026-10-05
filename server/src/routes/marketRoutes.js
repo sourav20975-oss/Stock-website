@@ -65,6 +65,12 @@ router.get('/global', async (req, res) => {
   res.json({ success: true, data });
 });
 
+// GET /api/market/sectors - live sectoral indices ribbon
+router.get('/sectors', async (req, res) => {
+  const data = await marketDataService.getSectoralRibbon();
+  res.json({ success: true, data });
+});
+
 // GET /api/market/heatmap
 router.get('/heatmap', async (req, res) => {
   const data = await marketDataService.getSectorHeatmap();

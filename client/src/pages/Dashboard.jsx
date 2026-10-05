@@ -27,8 +27,7 @@ import MarketIndices from '../components/market/MarketIndices';
 import GMPBadge from '../components/ipo/GMPBadge';
 import FreshnessIndicator from '../components/common/FreshnessIndicator';
 import GlobalMarketsStrip from '../components/market/GlobalMarketsStrip';
-import FiiDiiTracker from '../components/market/FiiDiiTracker';
-import SectorHeatmap from '../components/market/SectorHeatmap';
+import SectorsRibbonStrip from '../components/market/SectorsRibbonStrip';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -72,17 +71,6 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  // Quick sectors ribbon
-  const sectors = useMemo(() => [
-    { name: 'NIFTY AUTO', change: '+1.45%', isUp: true },
-    { name: 'NIFTY IT', change: '+0.81%', isUp: true },
-    { name: 'NIFTY BANK', change: '+0.55%', isUp: true },
-    { name: 'NIFTY OIL & GAS', change: '+0.70%', isUp: true },
-    { name: 'NIFTY REALTY', change: '+1.12%', isUp: true },
-    { name: 'NIFTY FMCG', change: '-0.24%', isUp: false },
-    { name: 'NIFTY METAL', change: '-0.52%', isUp: false },
-    { name: 'NIFTY PHARMA', change: '+0.32%', isUp: true }
-  ], []);
 
   // Filtered Movers
   const currentMoversList = useMemo(() => {
@@ -375,68 +363,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 3.5 Institutional Flow & FII/DII Activity */}
-      <FiiDiiTracker />
-
-      {/* 3.6 Interactive Sector Heatmap */}
-      <SectorHeatmap />
-
       {/* 4. Quick Sector Performance Ribbon */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        overflowX: 'auto',
-        paddingBottom: '4px'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '6px 12px',
-          backgroundColor: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-sm)',
-          fontSize: '11px',
-          fontWeight: 700,
-          color: 'var(--text-muted)',
-          whiteSpace: 'nowrap'
-        }}>
-          <Layers size={13} color="var(--primary)" />
-          <span>SECTORS:</span>
-        </div>
-        {sectors.map(sec => (
-          <Link
-            key={sec.name}
-            to="/market?tab=sectors"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 10px',
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: '12px',
-              textDecoration: 'none',
-              color: 'var(--text)',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-          >
-            <span style={{ fontWeight: 600 }}>{sec.name}</span>
-            <span className="num" style={{
-              fontWeight: 600,
-              color: sec.isUp ? 'var(--positive)' : 'var(--negative)',
-              fontSize: '11px'
-            }}>
-              {sec.change}
-            </span>
-          </Link>
-        ))}
-      </div>
+      <SectorsRibbonStrip />
 
       {/* 5. Main 2-Column Terminal Layout */}
       <div style={{

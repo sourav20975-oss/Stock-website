@@ -8,8 +8,8 @@ router.get('/', async (req, res) => {
   const { status } = req.query;
   const ipos = ipoService.getAllIPOs(status);
 
-  // If first request has only default seed data, attempt background or immediate live sync
-  if (ipos.length <= 5 && !ipoService.getLastSyncTime().includes(':')) {
+  // If empty, sync immediately
+  if (ipos.length === 0) {
     await ipoService.fetchLiveIPOs();
   }
 
@@ -57,9 +57,9 @@ router.get('/closed', (req, res) => {
 });
 
 // GET /api/ipos/:slug
-router.get('/:slug', (req, res) => {
+router.get('/:slug', async (req, res) => {
   const { slug } = req.params;
-  const ipo = ipoService.getIPOBySlug(slug);
+  const ipo = await ipoService.getIPOBySlugAsync(slug);
   if (!ipo) {
     return res.status(404).json({
       success: false,

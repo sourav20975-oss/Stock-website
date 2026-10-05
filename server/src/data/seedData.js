@@ -370,6 +370,37 @@ export const seedStocks = [
       roce: 18.2,
       bookValue: 305.0
     }
+  },
+  {
+    symbol: 'VEDL',
+    name: 'Vedanta Limited',
+    exchange: 'NSE',
+    sector: 'Metals & Mining',
+    industry: 'Diversified Metals & Mining',
+    ltp: 255.05,
+    change: 3.00,
+    changePercent: 1.19,
+    open: 253.30,
+    high: 256.60,
+    low: 252.05,
+    previousClose: 252.05,
+    volume: 7158418,
+    marketCap: '₹95,200 Cr',
+    pe: 12.8,
+    high52: 795.00,
+    low52: 247.25,
+    description: 'Vedanta Limited is a leading natural resources company with operations in zinc, lead, silver, oil & gas, iron ore, steel, aluminium and power across India, South Africa and Namibia.',
+    website: 'https://www.vedantalimited.com',
+    fundamentals: {
+      marketCapCr: 95200,
+      peRatio: 12.8,
+      pbRatio: 2.1,
+      dividendYield: 8.8,
+      debtToEquity: 1.2,
+      roe: 24.5,
+      roce: 26.2,
+      bookValue: 121.4
+    }
   }
 ];
 
@@ -720,6 +751,73 @@ export const seedIPOs = [
     ],
     objectsOfIssue: [
       'Investment in wholly owned subsidiary NTPC Renewable Energy Ltd (NREL) for repayment of certain borrowings',
+      'General corporate purposes'
+    ]
+  },
+  {
+    slug: 'jio-platforms',
+    companyName: 'Jio Platforms (Tentative) IPO',
+    symbol: 'JIOPLATFOR',
+    status: 'upcoming',
+    segment: 'Mainboard',
+    openDate: '21 Oct 2026',
+    closeDate: '23 Oct 2026',
+    allotmentDate: '26 Oct 2026',
+    refundDate: '27 Oct 2026',
+    listingDate: '28 Oct 2026',
+    priceBand: '₹1,300 – ₹1,350',
+    minPrice: 1300,
+    maxPrice: 1350,
+    lotSize: 11,
+    issueSize: '₹35,000 Cr',
+    issueSizeCr: 35000,
+    freshIssue: '₹20,000 Cr',
+    ofs: '₹15,000 Cr',
+    faceValue: '₹10 per share',
+    leadManagers: ['Morgan Stanley', 'Kotak Mahindra Capital', 'Citigroup', 'J.P. Morgan', 'Goldman Sachs', 'Axis Capital'],
+    registrar: 'KFin Technologies Ltd.',
+    gmp: {
+      value: 160,
+      percent: 11.9,
+      source: 'IPOGyani Live GMP',
+      fetchedAt: new Date().toISOString(),
+      trend: 'up',
+      disclaimer: 'Grey Market Premium (GMP) is strictly unofficial and indicative.'
+    },
+    subscription: {
+      retail: 0.0,
+      nii: 0.0,
+      qib: 0.0,
+      employee: 0.0,
+      overall: 'Not open',
+      updatedAt: new Date().toISOString()
+    },
+    estimatedListingPrice: 1510,
+    estimatedLotProfit: 1760,
+    aiPrediction: {
+      predictedPrice: 1324,
+      estProfit: -282,
+      percent: -1.9,
+      sentiment: 'Neutral (-1.9%)'
+    },
+    financials: [
+      { year: 'FY23', revenue: '₹91,240 Cr', ebitda: '₹45,120 Cr', pat: '₹19,124 Cr', eps: '₹42.50', debtToEquity: '0.12' },
+      { year: 'FY24', revenue: '₹1,09,560 Cr', ebitda: '₹53,890 Cr', pat: '₹22,860 Cr', eps: '₹50.80', debtToEquity: '0.08' },
+      { year: 'FY25 (Est)', revenue: '₹1,28,400 Cr', ebitda: '₹63,200 Cr', pat: '₹27,150 Cr', eps: '₹60.30', debtToEquity: '0.05' }
+    ],
+    strengths: [
+      'Dominant market leadership in Indian telecommunications with ~480+ million subscribers',
+      'Massive digital ecosystem spanning 5G connectivity, JioCinema, JioCloud, and AI services',
+      'Unmatched fiber-to-the-home (FTTH) and 5G FWA footprint across Tier-1 to Tier-4 cities',
+      'Strategic global backing from Meta, Google, Qualcomm, and Intel Capital'
+    ],
+    risks: [
+      'High ongoing 5G spectrum and infrastructure capital expenditure',
+      'Regulatory developments around satellite broadband and telecom tariff structures'
+    ],
+    objectsOfIssue: [
+      'Expansion of 5G Advanced infrastructure and pan-India cloud data centers',
+      'Capital expenditure for generative AI enterprise solutions and indigenous tech stack',
       'General corporate purposes'
     ]
   }

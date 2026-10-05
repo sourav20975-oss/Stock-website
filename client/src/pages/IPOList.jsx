@@ -586,25 +586,43 @@ export default function IPOList() {
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--table-hover)'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      {/* 1. Company & Segment with Initials Avatar */}
+                      {/* 1. Company & Segment with Logo / Initials Avatar */}
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '8px',
-                            backgroundColor: isSme ? 'var(--warning-bg)' : 'var(--primary-subtle)',
-                            border: isSme ? '1px solid var(--warning-border)' : '1px solid var(--primary)',
-                            color: isSme ? 'var(--warning)' : 'var(--primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            flexShrink: 0
-                          }}>
-                            {initials}
-                          </div>
+                          {ipo.logoUrl ? (
+                            <img
+                              src={ipo.logoUrl}
+                              alt={ipo.companyName}
+                              style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '8px',
+                                objectFit: 'contain',
+                                background: '#ffffff',
+                                padding: '2px',
+                                border: '1px solid var(--border)',
+                                flexShrink: 0
+                              }}
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              backgroundColor: isSme ? 'var(--warning-bg)' : 'var(--primary-subtle)',
+                              border: isSme ? '1px solid var(--warning-border)' : '1px solid var(--primary)',
+                              color: isSme ? 'var(--warning)' : 'var(--primary)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              flexShrink: 0
+                            }}>
+                              {initials}
+                            </div>
+                          )}
                           <div>
                             <Link
                               to={`/ipos/${ipo.slug}`}
@@ -618,7 +636,7 @@ export default function IPOList() {
                             >
                               {ipo.companyName}
                             </Link>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
                               <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
                                 {ipo.symbol}
                               </span>
@@ -655,9 +673,11 @@ export default function IPOList() {
                       {/* 4. Lot Size */}
                       <td style={{ padding: '12px 14px', textAlign: 'right', color: 'var(--text)', whiteSpace: 'nowrap' }}>
                         <span style={{ fontWeight: 600 }}>
-                          {ipo.lotSize ? ipo.lotSize.toLocaleString('en-IN') : '50'}
+                          {ipo.lotSize ? ipo.lotSize.toLocaleString('en-IN') : '-'}
                         </span>
-                        <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginLeft: '3px' }}>shares</span>
+                        {ipo.lotSize > 0 && (
+                          <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginLeft: '3px' }}>shares</span>
+                        )}
                       </td>
 
                       {/* 5. Live GMP Badge */}

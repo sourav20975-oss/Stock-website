@@ -1,18 +1,29 @@
 import React from 'react';
 
+const parseTimes = (val) => {
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  if (!val) return 0;
+  const cleaned = String(val).replace(/[^0-9.]/g, '');
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+};
+
 export default function SubscriptionTable({ subscription }) {
   if (!subscription) {
     return <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Subscription data not yet active.</div>;
   }
 
   const rows = [
-    { category: 'Qualified Institutional Buyers (QIB)', times: subscription.qib || 0 },
-    { category: 'Non-Institutional Investors (NII / HNI)', times: subscription.nii || 0 },
-    { category: 'Retail Individual Investors (RII)', times: subscription.retail || 0 },
-    { category: 'Employee Reservation', times: subscription.employee || 0 }
+    { category: 'Qualified Institutional Buyers (QIB)', raw: subscription.qib },
+    { category: 'Non-Institutional Investors (NII / HNI)', raw: subscription.nii || subscription.shni },
+    { category: 'Retail Individual Investors (RII)', raw: subscription.retail },
+    { category: 'Employee Reservation', raw: subscription.employee || 0 }
   ];
 
-  const overall = subscription.overall || 0;
+  const overallNum = parseTimes(subscription.overall || subscription.total || 0);
+  const overallDisplay = typeof subscription.overall === 'string' && subscription.overall.toLowerCase().includes('pending')
+    ? 'Pending'
+    : `${overallNum.toFixed(2)}x`;
 
   return (
     <div className="terminal-card">
@@ -28,7 +39,7 @@ export default function SubscriptionTable({ subscription }) {
           BIDDING & SUBSCRIPTION STATUS
         </span>
         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          Overall: <strong className="num" style={{ color: overall >= 1 ? 'var(--positive)' : 'var(--text)', fontSize: '12px' }}>{overall}x</strong>
+          Overall: <strong className="num" style={{ color: overallNum >= 1 ? 'var(--positive)' : 'var(--text)', fontSize: '12px' }}>{overallDisplay}</strong>
         </span>
       </div>
 
@@ -42,12 +53,17 @@ export default function SubscriptionTable({ subscription }) {
         </thead>
         <tbody>
           {rows.map((r, i) => {
-            const pct = Math.min(100, (r.times / Math.max(1, overall || 10)) * 100);
+            const num = parseTimes(r.raw);
+            const pct = Math.min(100, (num / Math.max(1, overallNum || 10)) * 100);
+            const displayVal = typeof r.raw === 'string' && r.raw.toLowerCase().includes('pending')
+              ? 'Pending'
+              : `${num.toFixed(2)}x`;
+
             return (
               <tr key={i}>
                 <td style={{ fontWeight: 500 }}>{r.category}</td>
-                <td className="num-col num" style={{ fontWeight: 600, color: r.times >= 1 ? 'var(--positive)' : 'var(--text)' }}>
-                  {r.times.toFixed(2)}x
+                <td className="num-col num" style={{ fontWeight: 600, color: num >= 1 ? 'var(--positive)' : 'var(--text)' }}>
+                  {displayVal}
                 </td>
                 <td>
                   <div style={{
@@ -60,7 +76,7 @@ export default function SubscriptionTable({ subscription }) {
                     <div style={{
                       width: `${pct}%`,
                       height: '100%',
-                      backgroundColor: r.times >= 1 ? 'var(--positive)' : 'var(--primary)'
+                      backgroundColor: num >= 1 ? 'var(--positive)' : 'var(--primary)'
                     }} />
                   </div>
                 </td>

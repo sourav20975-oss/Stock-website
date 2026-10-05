@@ -24,7 +24,7 @@ export default function Stocks() {
   ];
 
   const popularQuickPicks = [
-    'TCS', 'RELIANCE', 'INFY', 'HDFCBANK', 'TATAMOTORS', 
+    'TCS', 'RELIANCE', 'INFY', 'HDFCBANK', 'TATAMOTORS', 'VEDL',
     'ZOMATO', 'SUZLON', 'HAL', 'ITC', 'SBIN', 'TATASTEEL', 'JIOFIN'
   ];
 
