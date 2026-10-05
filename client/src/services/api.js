@@ -36,6 +36,11 @@ export const api = {
   getGainers: () => request('/market/gainers'),
   getLosers: () => request('/market/losers'),
   getMarketStatus: () => request('/market/status'),
+  getFiiDii: () => request('/market/fii-dii'),
+  getGlobalMarkets: () => request('/market/global'),
+  getSectorHeatmap: () => request('/market/heatmap'),
+  getCorporateCalendar: (type = 'all') => request(`/market/calendar?type=${type}`),
+  getScreener: (preset = 'all') => request(`/market/screener?preset=${preset}`),
 
   // Stocks
   getStocks: (search = '', sector = '') => {

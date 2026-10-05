@@ -53,4 +53,36 @@ router.get('/status', (req, res) => {
   res.json({ success: true, data: marketDataService.getMarketStatus() });
 });
 
+// GET /api/market/fii-dii
+router.get('/fii-dii', (req, res) => {
+  const data = marketDataService.getFiiDiiData();
+  res.json({ success: true, data });
+});
+
+// GET /api/market/global
+router.get('/global', async (req, res) => {
+  const data = await marketDataService.getGlobalMarkets();
+  res.json({ success: true, data });
+});
+
+// GET /api/market/heatmap
+router.get('/heatmap', async (req, res) => {
+  const data = await marketDataService.getSectorHeatmap();
+  res.json({ success: true, data });
+});
+
+// GET /api/market/calendar
+router.get('/calendar', (req, res) => {
+  const { type } = req.query;
+  const data = marketDataService.getCorporateCalendar(type);
+  res.json({ success: true, data });
+});
+
+// GET /api/market/screener
+router.get('/screener', async (req, res) => {
+  const { preset } = req.query;
+  const data = await marketDataService.runScreener(preset);
+  res.json({ success: true, data });
+});
+
 export default router;

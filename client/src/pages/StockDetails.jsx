@@ -28,6 +28,7 @@ import {
 import { api } from '../services/api';
 import { socketService } from '../services/socket';
 import { useWatchlist } from '../context/WatchlistContext';
+import { usePortfolio } from '../context/PortfolioContext';
 import StockChart from '../components/market/StockChart';
 import FreshnessIndicator from '../components/common/FreshnessIndicator';
 import { getIndianMarketStatus } from '../utils/marketTiming';
@@ -239,6 +240,7 @@ export default function StockDetails() {
   const { symbol } = useParams();
   const cleanSymbol = (symbol || 'TCS').toUpperCase();
   const { isWatched, toggleWatchlist } = useWatchlist();
+  const { buyStock, sellStock, cashBalance, holdings } = usePortfolio();
 
   const [stock, setStock] = useState(null);
   const [news, setNews] = useState([]);
@@ -446,23 +448,57 @@ export default function StockDetails() {
     }
   };
 
-  // Execute Simulated Order
+  // Execute Simulated Order into Real Virtual Portfolio
   const handleExecuteOrder = (e) => {
     e.preventDefault();
     const effectivePrice = orderVariety === 'MARKET' ? stock.ltp : limitPrice;
-    const totalVal = quantity * effectivePrice;
-    const orderId = `ORD-${Date.now().toString().slice(-6)}`;
+    const totalVal = Math.round(quantity * effectivePrice * 100) / 100;
 
-    setOrderModal({ open: false, type: 'BUY' });
-    setOrderToast({
-      id: orderId,
-      type: orderModal.type,
-      symbol: cleanSymbol,
-      qty: quantity,
-      price: effectivePrice,
-      total: totalVal,
-      product: productType
-    });
+    try {
+      if (orderModal.type === 'BUY') {
+        const res = buyStock({
+          symbol: cleanSymbol,
+          name: stock.name,
+          exchange: stock.exchange || 'NSE',
+          quantity,
+          price: effectivePrice,
+          productType
+        });
+
+        setOrderModal({ open: false, type: 'BUY' });
+        setOrderToast({
+          id: res.order.id,
+          type: 'BUY',
+          symbol: cleanSymbol,
+          qty: quantity,
+          price: effectivePrice,
+          total: totalVal,
+          product: productType
+        });
+      } else {
+        const res = sellStock({
+          symbol: cleanSymbol,
+          quantity,
+          price: effectivePrice,
+          productType
+        });
+
+        setOrderModal({ open: false, type: 'SELL' });
+        setOrderToast({
+          id: res.order.id,
+          type: 'SELL',
+          symbol: cleanSymbol,
+          qty: quantity,
+          price: effectivePrice,
+          total: totalVal,
+          product: productType,
+          realizedPnl: res.realizedPnl
+        });
+      }
+    } catch (err) {
+      alert(err.message);
+      return;
+    }
 
     setTimeout(() => {
       setOrderToast(null);

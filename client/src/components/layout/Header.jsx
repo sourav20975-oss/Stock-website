@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useWatchlist } from '../../context/WatchlistContext';
 import { api } from '../../services/api';
 import MarketTimingBadge from './MarketTimingBadge';
+import Logo from '../common/Logo';
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -106,31 +107,10 @@ export default function Header() {
       padding: '0 20px',
       gap: '16px'
     }}>
-      {/* Brand */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--primary)',
-            color: '#FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: '15px'
-          }}>
-            SK
-          </div>
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
-              Stock Knowledge
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              Indian Equity & IPO Research
-            </div>
-          </div>
+      {/* Brand Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '220px' }}>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <Logo size={32} />
         </Link>
       </div>
 

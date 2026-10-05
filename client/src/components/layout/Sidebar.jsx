@@ -5,15 +5,20 @@ import {
   TrendingUp,
   BarChart3,
   Search,
+  SlidersHorizontal,
+  Calendar,
   Rocket,
   Newspaper,
+  Briefcase,
   Star,
   Bot,
   Settings
 } from 'lucide-react';
+import { usePortfolio } from '../../context/PortfolioContext';
 
 export default function Sidebar() {
   const location = useLocation();
+  const { holdings } = usePortfolio();
 
   // Strictly mutually exclusive active flags for Market items
   const isMarketOverviewActive = location.pathname === '/market' && (!location.search || !location.search.includes('tab=movers'));
@@ -78,6 +83,14 @@ export default function Sidebar() {
           <Search size={18} />
           <span>Stock Directory</span>
         </NavLink>
+        <NavLink to="/screener" className={({ isActive }) => getNavLinkClass(isActive)}>
+          <SlidersHorizontal size={18} />
+          <span>Stock Screener</span>
+        </NavLink>
+        <NavLink to="/calendar" className={({ isActive }) => getNavLinkClass(isActive)}>
+          <Calendar size={18} />
+          <span>Corporate Calendar</span>
+        </NavLink>
         <NavLink to="/ipos" className={({ isActive }) => getNavLinkClass(isActive)}>
           <Rocket size={18} />
           <span>IPO Hub & GMP</span>
@@ -99,6 +112,23 @@ export default function Sidebar() {
         }}>
           PERSONAL
         </div>
+        <NavLink to="/portfolio" className={({ isActive }) => getNavLinkClass(isActive)}>
+          <Briefcase size={18} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span>Virtual Portfolio</span>
+            <span style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              padding: '1px 6px',
+              borderRadius: '4px',
+              backgroundColor: holdings.length > 0 ? 'var(--positive-bg)' : 'var(--primary-subtle)',
+              color: holdings.length > 0 ? 'var(--positive)' : 'var(--primary)',
+              border: `1px solid ${holdings.length > 0 ? 'var(--positive-border)' : 'var(--primary-border, transparent)'}`
+            }}>
+              {holdings.length > 0 ? `${holdings.length} Active` : '₹1L'}
+            </span>
+          </div>
+        </NavLink>
         <NavLink to="/watchlist" className={({ isActive }) => getNavLinkClass(isActive)}>
           <Star size={18} />
           <span>My Watchlist</span>

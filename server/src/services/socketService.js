@@ -89,32 +89,52 @@ export function setupSocketIO(httpServer) {
   });
 
   // Background ticker for actively subscribed stocks
-  // STRICT RULE: Only active during live continuous trading (09:15 AM - 03:30 PM IST Mon-Fri).
-  // When market is closed, stock prices on NSE / BSE are frozen at their closing price.
+  // STRICT RULE:
+  // - When market is closed (after 3:30 PM, before 9:15 AM, or weekends): Zero emissions, prices remain frozen at closing LTP.
+  // - When market is OPEN (09:15 AM - 03:30 PM IST): Fetches 100% REAL LIVE exchange quotes from NSE / BSE via fetchLiveQuote.
+  const lastFetchMap = new Map();
+
   setInterval(async () => {
     if (activeSubscriptions.size === 0) return;
 
     const marketStatus = marketDataService.getMarketStatus();
     if (!marketStatus.isLive) {
-      // Market is closed (after 3:30 PM, before 9:15 AM, or weekend)
-      // Stock prices DO NOT change on the exchange. NEVER emit simulated price fluctuations!
+      // Market is closed — stock prices on NSE / BSE are frozen.
       return;
     }
 
-    activeSubscriptions.forEach((subscribers, symbol) => {
+    const now = Date.now();
+    activeSubscriptions.forEach(async (subscribers, symbol) => {
       if (subscribers.size > 0) {
-        const update = marketDataService.simulateTick(symbol);
-        if (update) {
-          io.to(`stock:${symbol}`).emit('stock:update', {
-            ...update,
-            isMarketOpen: true,
-            marketStatus: marketStatus.status,
-            timestamp: Date.now()
-          });
+        // Throttle each symbol to 4 seconds to respect API limits while delivering real live quotes
+        const lastFetch = lastFetchMap.get(symbol) || 0;
+        if (now - lastFetch < 4000) return;
+        lastFetchMap.set(symbol, now);
+
+        try {
+          const freshQuote = await marketDataService.fetchLiveQuote(symbol);
+          if (freshQuote) {
+            io.to(`stock:${symbol}`).emit('stock:update', {
+              symbol: freshQuote.symbol,
+              ltp: freshQuote.ltp,
+              change: freshQuote.change,
+              changePercent: freshQuote.changePercent,
+              volume: freshQuote.volume,
+              high: freshQuote.high,
+              low: freshQuote.low,
+              open: freshQuote.open,
+              isMarketOpen: true,
+              marketStatus: marketStatus.status,
+              isRealLive: true,
+              timestamp: Date.now()
+            });
+          }
+        } catch (err) {
+          console.warn(`[Socket Live Feed] Error updating ${symbol}:`, err.message);
         }
       }
     });
-  }, 2500);
+  }, 2000);
 
   return io;
 }

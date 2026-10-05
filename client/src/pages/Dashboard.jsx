@@ -26,6 +26,9 @@ import { api } from '../services/api';
 import MarketIndices from '../components/market/MarketIndices';
 import GMPBadge from '../components/ipo/GMPBadge';
 import FreshnessIndicator from '../components/common/FreshnessIndicator';
+import GlobalMarketsStrip from '../components/market/GlobalMarketsStrip';
+import FiiDiiTracker from '../components/market/FiiDiiTracker';
+import SectorHeatmap from '../components/market/SectorHeatmap';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -94,20 +97,47 @@ export default function Dashboard() {
     return list.filter(s => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
   }, [overview, moversTab, moversSearch]);
 
-  // Market Breadth calculation based on Nifty 50 or top indices
+  // Dynamic Market Breadth & Sentiment based on real active indices and movers
   const breadthStats = useMemo(() => {
-    const nifty = overview?.indices?.find(idx => idx.symbol.includes('50')) || overview?.indices?.[0];
-    const advances = nifty?.advances || 34;
-    const declines = nifty?.declines || 16;
+    const nifty = overview?.indices?.find(idx => idx.symbol.includes('50') || idx.symbol.includes('NIFTY')) || overview?.indices?.[0];
+    const advances = nifty?.advances ?? 34;
+    const declines = nifty?.declines ?? 16;
     const total = advances + declines;
-    const advPercent = Math.round((advances / (total || 1)) * 100);
+    const advPercent = total > 0 ? Math.round((advances / total) * 100) : 50;
     const decPercent = 100 - advPercent;
+    const ratio = (advances / (declines || 1)).toFixed(2);
+
+    let tone = 'Neutral Stance';
+    let toneColor = 'var(--text)';
+    let toneDesc = `${advances} advances and ${declines} declines evenly balanced.`;
+
+    if (advances >= declines * 1.5) {
+      tone = 'Strong Bullish';
+      toneColor = 'var(--positive)';
+      toneDesc = `${advances} heavyweights advancing, buyers strongly dominating.`;
+    } else if (advances > declines) {
+      tone = 'Bullish Bias';
+      toneColor = 'var(--positive)';
+      toneDesc = `${advances} buyers outnumbering ${declines} sellers across cash segments.`;
+    } else if (declines >= advances * 1.5) {
+      tone = 'Strong Bearish';
+      toneColor = 'var(--negative)';
+      toneDesc = `${declines} heavyweights declining, sellers strongly dominating.`;
+    } else if (declines > advances) {
+      tone = 'Bearish Bias';
+      toneColor = 'var(--negative)';
+      toneDesc = `${declines} sellers outnumbering ${advances} buyers across cash segments.`;
+    }
+
     return {
       advances,
       declines,
       advPercent,
       decPercent,
-      ratio: (advances / (declines || 1)).toFixed(2)
+      ratio,
+      tone,
+      toneColor,
+      toneDesc
     };
   }, [overview]);
 
@@ -134,6 +164,9 @@ export default function Dashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
       
+      {/* 0. Real-Time Global Benchmark Tape */}
+      <GlobalMarketsStrip />
+
       {/* 1. Terminal Header & Market Breadth Command Bar */}
       <div style={{
         backgroundColor: 'var(--surface)',
@@ -237,7 +270,7 @@ export default function Dashboard() {
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         gap: '14px'
       }}>
-        {/* Card 1: Market Tone & Sentiment */}
+        {/* Card 1: Dynamic Market Tone & Sentiment */}
         <div className="terminal-card interactive-card" style={{ padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
@@ -246,15 +279,15 @@ export default function Dashboard() {
             <Activity size={15} color="var(--primary)" />
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--positive)' }}>
-              Bullish Momentum
+            <span style={{ fontSize: '17px', fontWeight: 800, color: breadthStats.toneColor }}>
+              {breadthStats.tone}
             </span>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
               ({breadthStats.ratio}x A/D)
             </span>
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Nifty 50 buyers outnumber sellers across cash segments.
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.4 }}>
+            {breadthStats.toneDesc}
           </div>
         </div>
 
@@ -302,7 +335,11 @@ export default function Dashboard() {
                 <GMPBadge gmp={topGmpIpo.gmp} maxPrice={topGmpIpo.maxPrice} compact />
               </div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
-                Band: {topGmpIpo.priceBand} • Est. Listing: ₹{(topGmpIpo.estimatedListingPrice || 0).toLocaleString('en-IN')}
+                {topGmpIpo.maxPrice && topGmpIpo.maxPrice > 0 ? (
+                  <span>Band: ₹{topGmpIpo.minPrice || topGmpIpo.priceBand} - ₹{topGmpIpo.maxPrice} • Est. Listing: ₹{(topGmpIpo.estimatedListingPrice || 0).toLocaleString('en-IN')}</span>
+                ) : (
+                  <span>Price Band: {topGmpIpo.priceBand || 'TBA'} • Expected Soon</span>
+                )}
               </div>
             </div>
           ) : (
@@ -310,7 +347,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Card 4: AI Valuation Terminal Launcher */}
+        {/* Card 4: Dynamic AI Terminal Spotlight */}
         <div className="terminal-card interactive-card" style={{ padding: '14px 16px', backgroundColor: 'var(--surface-secondary)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>
@@ -320,17 +357,29 @@ export default function Dashboard() {
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
-              Peer & Valuation Engine
+              {topGainer ? `Audit ${topGainer.symbol}` : 'Peer & Valuation Engine'}
             </span>
-            <Link to="/ai" style={{ fontSize: '11px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
-              Launch →
+            <Link 
+              to={topGainer ? `/ai?symbol=${topGainer.symbol}` : '/ai'} 
+              style={{ fontSize: '11px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}
+            >
+              Analyze →
             </Link>
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Deep balance sheet audits & Gemini financial analysis.
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.4 }}>
+            {topGainer 
+              ? `AI balance sheet audit & valuation signals for ${topGainer.name || topGainer.symbol}.`
+              : 'Deep balance sheet audits & Gemini financial analysis.'
+            }
           </div>
         </div>
       </div>
+
+      {/* 3.5 Institutional Flow & FII/DII Activity */}
+      <FiiDiiTracker />
+
+      {/* 3.6 Interactive Sector Heatmap */}
+      <SectorHeatmap />
 
       {/* 4. Quick Sector Performance Ribbon */}
       <div style={{
