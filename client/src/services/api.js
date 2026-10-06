@@ -64,13 +64,16 @@ export const api = {
   syncLiveIPOs: () => request('/ipos/sync-live', { method: 'POST' }),
 
   // News
-  getNews: (symbol = '', category = '') => {
+  getNews: (symbol = '', category = '', limit = 25, forceRefresh = false) => {
     const params = new URLSearchParams();
     if (symbol) params.append('symbol', symbol);
     if (category) params.append('category', category);
+    if (limit) params.append('limit', limit);
+    if (forceRefresh) params.append('forceRefresh', 'true');
     const query = params.toString() ? `?${params.toString()}` : '';
     return request(`/news${query}`);
   },
+  syncNewsWire: () => request('/news/sync', { method: 'POST' }),
 
   // Watchlist
   getWatchlist: () => request('/watchlists'),

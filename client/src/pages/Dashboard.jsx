@@ -20,7 +20,8 @@ import {
   ShieldCheck,
   Zap,
   BarChart3,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Calendar
 } from 'lucide-react';
 import { api } from '../services/api';
 import MarketIndices from '../components/market/MarketIndices';
@@ -30,6 +31,39 @@ import GlobalMarketsStrip from '../components/market/GlobalMarketsStrip';
 import SectorsRibbonStrip from '../components/market/SectorsRibbonStrip';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useTheme } from '../context/ThemeContext';
+
+function formatBiddingDatesDisplay(dates, openDate, closeDate) {
+  if (openDate && closeDate && openDate !== 'TBA' && closeDate !== 'TBA') {
+    try {
+      const o = new Date(openDate);
+      const c = new Date(closeDate);
+      if (!isNaN(o.getTime()) && !isNaN(c.getTime())) {
+        const oDay = o.getDate();
+        const oMonth = o.toLocaleDateString('en-IN', { month: 'short' });
+        const cDay = c.getDate();
+        const cMonth = c.toLocaleDateString('en-IN', { month: 'short' });
+        const cYear = c.getFullYear();
+        if (o.getFullYear() === c.getFullYear()) {
+          if (oMonth === cMonth) return `${oDay} – ${cDay} ${cMonth} ${cYear}`;
+          return `${oDay} ${oMonth} – ${cDay} ${cMonth} ${cYear}`;
+        }
+        return `${oDay} ${oMonth} ${o.getFullYear()} – ${cDay} ${cMonth} ${cYear}`;
+      }
+    } catch {}
+  }
+
+  if (typeof dates === 'string' && dates.includes(' to ')) {
+    const [s, e] = dates.split(' to ');
+    return formatBiddingDatesDisplay(null, s.trim(), e.trim());
+  }
+
+  if (typeof dates === 'string' && dates.includes(' – ')) {
+    const [s, e] = dates.split(' – ');
+    return formatBiddingDatesDisplay(null, s.trim(), e.trim());
+  }
+
+  return dates || 'Announced';
+}
 
 export default function Dashboard() {
   const [overview, setOverview] = useState(null);
@@ -69,6 +103,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Auto-refresh new IPOs and market overview every 25 seconds
+    const interval = setInterval(() => {
+      api.getIPOs().then(res => {
+        if (res.success && res.data) setIpos(res.data);
+      }).catch(() => {});
+    }, 25000);
+
+    return () => clearInterval(interval);
   }, []);
 
 
@@ -615,10 +658,31 @@ export default function Dashboard() {
               justifyContent: 'space-between',
               backgroundColor: 'var(--surface-secondary)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <Rocket size={16} color="var(--primary)" />
                 <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>
                   PRIMARY MARKET & LIVE IPO GMP RADAR
+                </span>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                  color: 'var(--positive)',
+                  backgroundColor: 'rgba(8, 153, 129, 0.1)',
+                  padding: '2px 6px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(8, 153, 129, 0.25)'
+                }}>
+                  <span style={{
+                    width: '5px',
+                    height: '5px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--positive)',
+                    animation: 'pulse 1.8s infinite'
+                  }} />
+                  Live Auto-Sync
                 </span>
               </div>
               <Link to="/ipos" style={{ fontSize: '12px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
@@ -661,8 +725,21 @@ export default function Dashboard() {
                         <GMPBadge gmp={ipo.gmp} maxPrice={ipo.maxPrice} compact />
                       </td>
 
-                      <td style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                        {ipo.openDate} – {ipo.closeDate}
+                      <td style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '3px 8px',
+                          borderRadius: '5px',
+                          backgroundColor: 'var(--surface-secondary)',
+                          border: '1px solid var(--border)',
+                          fontWeight: 600,
+                          color: 'var(--text)'
+                        }}>
+                          <Calendar size={11} color="var(--primary)" />
+                          <span>{formatBiddingDatesDisplay(ipo.biddingDates, ipo.openDate, ipo.closeDate)}</span>
+                        </div>
                       </td>
 
                       <td>

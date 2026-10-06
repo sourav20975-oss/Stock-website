@@ -33,6 +33,7 @@ export default function NewsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [copiedId, setCopiedId] = useState(null);
+  const [feedback, setFeedback] = useState('');
 
   const categories = [
     { id: 'All', label: 'All Dispatches', icon: Layers },
@@ -50,7 +51,7 @@ export default function NewsPage() {
   const fetchNews = async () => {
     setLoading(true);
     try {
-      const res = await api.getNews('', category === 'All' ? '' : category, 25);
+      const res = await api.getNews('', category === 'All' ? '' : category, 35);
       if (res.success) {
         setNews(res.data);
         setLastRefreshed(new Date());
@@ -64,14 +65,18 @@ export default function NewsPage() {
 
   const handleManualRefresh = async () => {
     setRefreshing(true);
+    setFeedback('');
     try {
-      const res = await api.getNews('', category === 'All' ? '' : category, 25);
-      if (res.success) {
+      const res = await api.getNews('', category === 'All' ? '' : category, 45, true);
+      if (res.success && res.data) {
         setNews(res.data);
         setLastRefreshed(new Date());
+        setFeedback(`✓ Synced ${res.data.length} live dispatches`);
+        setTimeout(() => setFeedback(''), 4500);
       }
     } catch (err) {
       console.error('Error refreshing news:', err);
+      setFeedback('Failed to sync wire');
     } finally {
       setRefreshing(false);
     }
@@ -240,6 +245,20 @@ export default function NewsPage() {
             }} />
             <span>LIVE WIRE ACTIVE</span>
           </div>
+
+          {feedback && (
+            <span style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              color: 'var(--positive)',
+              backgroundColor: 'rgba(8, 153, 129, 0.1)',
+              border: '1px solid rgba(8, 153, 129, 0.25)',
+              padding: '4px 10px',
+              borderRadius: '6px'
+            }}>
+              {feedback}
+            </span>
+          )}
 
           <button
             onClick={handleManualRefresh}

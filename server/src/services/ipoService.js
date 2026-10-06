@@ -3,6 +3,61 @@ let lastExtractedAt = null;
 const ipoCooldowns = new Map();
 const COOLDOWN_SECONDS = 10;
 
+// Helper to format bidding dates cleanly (e.g. "30 Sep – 6 Oct 2026")
+function formatBiddingDates(openDate, closeDate) {
+  if (!openDate || !closeDate || openDate === 'TBA' || closeDate === 'TBA') {
+    return 'Announced';
+  }
+  try {
+    const o = new Date(openDate);
+    const c = new Date(closeDate);
+    if (!isNaN(o.getTime()) && !isNaN(c.getTime())) {
+      const oDay = o.getDate();
+      const oMonth = o.toLocaleDateString('en-IN', { month: 'short' });
+      const cDay = c.getDate();
+      const cMonth = c.toLocaleDateString('en-IN', { month: 'short' });
+      const cYear = c.getFullYear();
+
+      if (o.getFullYear() === c.getFullYear()) {
+        if (oMonth === cMonth) {
+          return `${oDay} – ${cDay} ${cMonth} ${cYear}`;
+        }
+        return `${oDay} ${oMonth} – ${cDay} ${cMonth} ${cYear}`;
+      }
+      return `${oDay} ${oMonth} ${o.getFullYear()} – ${cDay} ${cMonth} ${cYear}`;
+    }
+  } catch {
+    // fallback
+  }
+  return `${openDate} to ${closeDate}`;
+}
+
+// Helper to determine exact real status
+function determineStatus(item) {
+  const raw = (item.status || '').toLowerCase().trim();
+  if (raw === 'open' || raw === 'lastday' || raw === 'bidding') {
+    return 'open';
+  }
+  if (raw === 'listing' || raw === 'closed' || raw === 'allot') {
+    return 'closed';
+  }
+
+  if (item.openDate && item.closeDate) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (todayStr >= item.openDate && todayStr <= item.closeDate) {
+      return 'open';
+    }
+    if (todayStr > item.closeDate) {
+      return 'closed';
+    }
+    if (todayStr < item.openDate) {
+      return 'upcoming';
+    }
+  }
+
+  return 'upcoming';
+}
+
 // Helper to extract balanced bracket JSON string from RSC stream
 function extractBalancedArray(str, startIndex) {
   let depth = 0;
@@ -36,139 +91,200 @@ function extractBalancedObject(str, startIndex) {
   return str.slice(startIndex, endIdx);
 }
 
-export const ipoService = {
-  // Pure IPOGyani Live RSC stream extractor - NO InvestorGain, NO old data
-  async fetchFromIPOGyani() {
-    try {
-      const res = await fetch('https://ipogyani.com/', {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+function normalizeIpoItem(item) {
+  const slug = item.slug || item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const priceMin = typeof item.priceMin === 'number' ? item.priceMin : (parseFloat(item.priceMin) || 0);
+  const priceMax = typeof item.priceMax === 'number' ? item.priceMax : (parseFloat(item.priceMax) || priceMin);
+  const lotSize = typeof item.lotSize === 'number' ? item.lotSize : (parseInt(item.lotSize, 10) || 1);
+  const gmpVal = typeof item.gmp === 'number' ? item.gmp : (parseFloat(item.gmp) || 0);
+
+  let gmpPct = typeof item.gmpPercent === 'number' ? item.gmpPercent : (parseFloat(item.gmpPercent) || 0);
+  if ((!gmpPct || gmpPct === 0) && gmpVal && priceMax > 0) {
+    gmpPct = Math.round((gmpVal / priceMax) * 1000) / 10;
+  }
+
+  const estList = typeof item.estListPrice === 'number' && item.estListPrice > 0
+    ? item.estListPrice
+    : (priceMax + gmpVal);
+
+  const status = determineStatus(item);
+
+  const priceBand = priceMin && priceMax
+    ? (priceMin === priceMax ? `₹${priceMax}` : `₹${priceMin.toLocaleString('en-IN')} – ₹${priceMax.toLocaleString('en-IN')}`)
+    : 'TBA';
+
+  const issueSize = item.issueSizeCr
+    ? `₹${item.issueSizeCr.toLocaleString('en-IN')} Cr`
+    : (item.issueSize ? `₹${item.issueSize} Cr` : 'TBA');
+
+  const gmpHistory = Array.isArray(item.gmpHistory) && item.gmpHistory.length > 0
+    ? item.gmpHistory
+    : (Array.isArray(item.gmpTrends) && item.gmpTrends.length > 0 ? item.gmpTrends : [
+        {
+          date: item.gmpLastUpdated || new Date().toISOString(),
+          gmp: gmpVal,
+          gmpPercent: gmpPct,
+          source: 'Live'
         }
-      });
+      ]);
 
-      if (!res.ok) {
-        console.warn(`[IPO Service] IPOGyani returned HTTP ${res.status}`);
-        return runtimeIPOs;
+  // Subscription normalizing
+  const subTotal = item.subscription?.total !== undefined ? item.subscription.total : (item.subscription?.overall || '0x');
+  const subRetail = item.subscription?.retail !== undefined ? item.subscription.retail : '0x';
+  const subQib = item.subscription?.qib !== undefined ? item.subscription.qib : '0x';
+  const subNii = item.subscription?.nii !== undefined ? item.subscription.nii : (item.subscription?.shni || '0x');
+
+  // Formatted Financials
+  let formattedFinancials = [];
+  if (item.financials) {
+    const f = item.financials;
+    ['fy24', 'fy25', 'fy26'].forEach(yr => {
+      if (f.revenue?.[yr] || f.pat?.[yr] || f.ebitda?.[yr]) {
+        formattedFinancials.push({
+          year: yr.toUpperCase(),
+          revenue: f.revenue?.[yr] ? `₹${f.revenue[yr].toLocaleString('en-IN')} Cr` : 'N/A',
+          ebitda: f.ebitda?.[yr] ? `₹${f.ebitda[yr].toLocaleString('en-IN')} Cr` : 'N/A',
+          pat: f.pat?.[yr] ? `₹${f.pat[yr].toLocaleString('en-IN')} Cr` : 'N/A',
+          eps: item.kpi?.prePost?.eps?.pre ? `₹${item.kpi.prePost.eps.pre}` : 'N/A',
+          debtToEquity: f.debtEquity?.[yr] ? `${f.debtEquity[yr]}` : (f.debtEquity ? `${f.debtEquity}` : 'N/A')
+        });
       }
+    });
+  }
 
-      const html = await res.text();
-      const rscChunks = html.match(/self\.__next_f\.push\(\[1,"([\s\S]*?)"\]\)/g) || [];
-      const fullRsc = rscChunks.join('\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-      const startIdx = fullRsc.indexOf('"ipos":[');
-      if (startIdx === -1) {
-        console.warn('[IPO Service] No "ipos" array found in IPOGyani RSC stream');
-        return runtimeIPOs;
+  const cleanStrengths = (item.greenFlags || []).filter(f => f && !f.includes('=== END ==='));
+  const cleanRisks = (item.redFlags || []).filter(f => f && !f.includes('=== END ==='));
+
+  const leadMgrs = item.leadManager
+    ? (Array.isArray(item.leadManager) ? item.leadManager : item.leadManager.split(';').map(m => m.trim()))
+    : ['Axis Capital', 'Kotak Mahindra', 'ICICI Securities'];
+
+  return {
+    id: item.id || slug,
+    companyName: item.name,
+    slug,
+    symbol: item.abbr || item.name.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10),
+    logoUrl: item.logoUrl && item.logoUrl !== 'NA' && item.logoUrl !== '$undefined' ? item.logoUrl : null,
+    segment: item.exchange || 'Mainboard',
+    sector: item.sector || 'Diversified',
+    status,
+    priceBand,
+    minPrice: priceMin,
+    maxPrice: priceMax,
+    issueSize,
+    lotSize,
+    lotSizeDisplay: `${lotSize} shares`,
+    shniLotSize: item.shniLotSize || null,
+    bhniLotSize: item.bhniLotSize || null,
+    minInvestment: priceMax * lotSize,
+    faceValue: item.faceValue || 10,
+    gmp: {
+      value: gmpVal,
+      percent: gmpPct,
+      trend: gmpVal > 0 ? 'up' : (gmpVal < 0 ? 'down' : 'neutral'),
+      fetchedAt: new Date().toISOString(),
+      lastReported: item.gmpLastUpdated || 'Live'
+    },
+    gmpHistory,
+    subscription: {
+      overall: subTotal,
+      retail: subRetail,
+      qib: subQib,
+      nii: subNii,
+      updatedAt: new Date().toISOString()
+    },
+    biddingDates: formatBiddingDates(item.openDate, item.closeDate),
+    openDate: item.openDate || 'TBA',
+    closeDate: item.closeDate || 'TBA',
+    allotmentDate: item.allotmentDate || 'TBA',
+    refundDate: item.allotmentDate || 'TBA',
+    listingDate: item.listDate || 'TBA',
+    estimatedListingPrice: estList,
+    estimatedLotProfit: gmpVal * lotSize,
+    aiPrediction: {
+      predictedPrice: Math.round(estList * 100) / 100,
+      estProfit: gmpVal * lotSize,
+      percent: gmpPct,
+      sentiment: gmpPct > 15 ? 'Very Bullish' : (gmpPct > 0 ? 'Bullish' : 'Neutral')
+    },
+    leadManagers: leadMgrs,
+    registrar: item.registrar || 'Link Intime / KFin Technologies',
+    aboutCompany: item.aboutCompany || '',
+    strengths: cleanStrengths,
+    risks: cleanRisks,
+    financials: formattedFinancials,
+    rawFinancials: item.financials || null,
+    kpi: item.kpi || null,
+    issueDetails: item.issueDetails || null,
+    riskLevel: gmpPct > 35 ? 'High Demand' : (gmpPct > 10 ? 'Moderate' : 'Speculative'),
+    isLiveExtracted: true,
+    source: 'Live',
+    updatedAt: new Date().toISOString()
+  };
+}
+
+export const ipoService = {
+  // Pure Live Data Extractor: Direct API first, with RSC stream fallback
+  async fetchFromIPOGyani() {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/html, */*'
+    };
+
+    // 1. Primary: Direct JSON REST API
+    try {
+      const res = await fetch('https://ipogyani.com/api/ipos', { headers });
+      if (res.ok) {
+        const jsonList = await res.json();
+        if (Array.isArray(jsonList) && jsonList.length > 0) {
+          const parsed = jsonList.map(normalizeIpoItem);
+          console.log(`[IPO Service] Extracted ${parsed.length} live IPOs via /api/ipos`);
+          return parsed;
+        }
+      } else {
+        console.warn(`[IPO Service] /api/ipos returned status ${res.status}`);
       }
-
-      const rawArray = extractBalancedArray(fullRsc, startIdx + 7).replace(/"\$undefined"/g, 'null');
-      const ipoList = JSON.parse(rawArray);
-
-      const parsed = ipoList.map(item => {
-        const slug = item.slug || item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        const priceMin = typeof item.priceMin === 'number' ? item.priceMin : 0;
-        const priceMax = typeof item.priceMax === 'number' ? item.priceMax : priceMin;
-        const lotSize = typeof item.lotSize === 'number' ? item.lotSize : 1;
-        const gmpVal = typeof item.gmp === 'number' ? item.gmp : 0;
-        const gmpPct = typeof item.gmpPercent === 'number' ? item.gmpPercent : 0;
-        const estList = typeof item.estListPrice === 'number' ? item.estListPrice : (priceMax + gmpVal);
-
-        let status = 'upcoming';
-        if (item.status === 'open') status = 'open';
-        else if (item.status === 'listing' || item.status === 'closed' || item.status === 'allot') status = 'closed';
-        else if (item.status === 'upcoming') status = 'upcoming';
-
-        const priceBand = priceMin && priceMax
-          ? (priceMin === priceMax ? `₹${priceMax}` : `₹${priceMin.toLocaleString('en-IN')} – ₹${priceMax.toLocaleString('en-IN')}`)
-          : 'TBA';
-
-        const issueSize = item.issueSizeCr
-          ? `₹${item.issueSizeCr.toLocaleString('en-IN')} Cr`
-          : (item.issueSize ? `₹${item.issueSize} Cr` : 'TBA');
-
-        // Extract any history or trends directly from item
-        const gmpHistory = Array.isArray(item.gmpHistory) && item.gmpHistory.length > 0
-          ? item.gmpHistory
-          : (Array.isArray(item.gmpTrends) && item.gmpTrends.length > 0 ? item.gmpTrends : [
-              {
-                date: item.gmpLastUpdated || new Date().toISOString(),
-                gmp: gmpVal,
-                gmpPercent: gmpPct,
-                source: 'Live'
-              }
-            ]);
-
-        return {
-          id: item.id,
-          companyName: item.name,
-          slug,
-          symbol: item.abbr || item.name.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10),
-          logoUrl: item.logoUrl && item.logoUrl !== 'NA' ? item.logoUrl : null,
-          segment: item.exchange || 'Mainboard',
-          sector: item.sector || 'Diversified',
-          status,
-          priceBand,
-          minPrice: priceMin,
-          maxPrice: priceMax,
-          issueSize,
-          lotSize,
-          lotSizeDisplay: `${lotSize} shares`,
-          shniLotSize: item.shniLotSize || null,
-          bhniLotSize: item.bhniLotSize || null,
-          minInvestment: priceMax * lotSize,
-          faceValue: item.faceValue || 10,
-          gmp: {
-            value: gmpVal,
-            percent: gmpPct,
-            trend: gmpVal > 0 ? 'up' : (gmpVal < 0 ? 'down' : 'neutral'),
-            fetchedAt: new Date().toISOString(),
-            lastReported: item.gmpLastUpdated || 'Live'
-          },
-          gmpHistory,
-          subscription: {
-            overall: item.subscription?.total || '0x',
-            retail: item.subscription?.retail || '0x',
-            qib: item.subscription?.qib || '0x',
-            nii: item.subscription?.nii || item.subscription?.shni || '0x',
-            updatedAt: new Date().toISOString()
-          },
-          biddingDates: item.openDate && item.closeDate ? `${item.openDate} to ${item.closeDate}` : 'Announced',
-          openDate: item.openDate || 'TBA',
-          closeDate: item.closeDate || 'TBA',
-          allotmentDate: item.allotmentDate || 'TBA',
-          refundDate: item.allotmentDate || 'TBA',
-          listingDate: item.listDate || 'TBA',
-          estimatedListingPrice: estList,
-          estimatedLotProfit: gmpVal * lotSize,
-          aiPrediction: {
-            predictedPrice: Math.round(estList * 100) / 100,
-            estProfit: gmpVal * lotSize,
-            percent: gmpPct,
-            sentiment: gmpPct > 15 ? 'Very Bullish' : (gmpPct > 0 ? 'Bullish' : 'Neutral')
-          },
-          leadManagers: ['Kotak Mahindra Capital', 'ICICI Securities', 'Axis Capital'],
-          registrar: 'Link Intime / KFin Technologies',
-          riskLevel: gmpPct > 35 ? 'High Demand' : (gmpPct > 10 ? 'Moderate' : 'Speculative'),
-          isLiveExtracted: true,
-          source: 'Live',
-          updatedAt: new Date().toISOString()
-        };
-      });
-
-      console.log(`[IPO Service] Extracted ${parsed.length} pure IPOGyani IPOs!`);
-      return parsed;
     } catch (err) {
-      console.warn('[IPO Service] IPOGyani extract error:', err.message);
-      return runtimeIPOs;
+      console.warn('[IPO Service] /api/ipos fetch failed, attempting HTML fallback:', err.message);
     }
+
+    // 2. Secondary Fallback: HTML Next.js RSC Stream
+    try {
+      const res = await fetch('https://ipogyani.com/', { headers });
+      if (res.ok) {
+        const html = await res.text();
+        const rscChunks = html.match(/self\.__next_f\.push\(\[1,"([\s\S]*?)"\]\)/g) || [];
+        const fullRsc = rscChunks.join('\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+        const startIdx = fullRsc.indexOf('"ipos":[');
+        if (startIdx !== -1) {
+          const rawArray = extractBalancedArray(fullRsc, startIdx + 7).replace(/"\$undefined"/g, 'null');
+          const ipoList = JSON.parse(rawArray);
+          if (Array.isArray(ipoList) && ipoList.length > 0) {
+            const parsed = ipoList.map(normalizeIpoItem);
+            console.log(`[IPO Service] Extracted ${parsed.length} live IPOs via HTML RSC fallback`);
+            return parsed;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[IPO Service] HTML fallback also failed:', err.message);
+    }
+
+    return runtimeIPOs;
   },
 
-  // Dynamic Full Detail Extractor for any IPO from IPOGyani (A to Z fields)
+  // Dynamic Full Detail Extractor for any IPO
   async fetchIPODetailFromGyani(slug) {
     try {
       let targetSlug = slug;
       if (slug.includes('jio') && !slug.includes('tentative')) {
         targetSlug = 'jio-platforms-tentative-ipo';
+      }
+
+      // Check if runtime already has this IPO with complete details
+      const existing = runtimeIPOs.find(i => i.slug === targetSlug || (targetSlug.includes('jio') && i.slug.includes('jio')));
+      if (existing && existing.issueDetails && existing.gmpHistory?.length > 1) {
+        return existing;
       }
 
       const res = await fetch(`https://ipogyani.com/ipo/${targetSlug}`, {
@@ -187,138 +303,27 @@ export const ipoService = {
       if (startIdx === -1) return null;
 
       const rawJson = extractBalancedObject(fullRsc, startIdx + 7).replace(/"\$undefined"/g, 'null');
-      const ipo = JSON.parse(rawJson);
+      const rawIpo = JSON.parse(rawJson);
 
-      const priceMin = ipo.priceMin || 0;
-      const priceMax = ipo.priceMax || priceMin;
-      const lotSize = ipo.lotSize || 1;
-      const gmpVal = ipo.gmp || 0;
-      const gmpPct = ipo.gmpPercent || 0;
-      const estList = ipo.estListPrice || (priceMax + gmpVal);
-
-      // Financials array formatting
-      const formattedFinancials = ipo.financials ? [
-        {
-          year: 'FY24',
-          revenue: ipo.financials.revenue?.fy24 ? `₹${ipo.financials.revenue.fy24.toLocaleString('en-IN')} Cr` : 'N/A',
-          ebitda: ipo.financials.ebitda?.fy24 ? `₹${ipo.financials.ebitda.fy24.toLocaleString('en-IN')} Cr` : 'N/A',
-          pat: ipo.financials.pat?.fy24 ? `₹${ipo.financials.pat.fy24.toLocaleString('en-IN')} Cr` : 'N/A',
-          eps: ipo.kpi?.prePost?.eps?.pre ? `₹${ipo.kpi.prePost.eps.pre}` : 'N/A',
-          debtToEquity: ipo.financials.debtEquity?.fy24 ? `${ipo.financials.debtEquity.fy24}` : 'N/A'
-        },
-        {
-          year: 'FY25',
-          revenue: ipo.financials.revenue?.fy25 ? `₹${ipo.financials.revenue.fy25.toLocaleString('en-IN')} Cr` : 'N/A',
-          ebitda: ipo.financials.ebitda?.fy25 ? `₹${ipo.financials.ebitda.fy25.toLocaleString('en-IN')} Cr` : 'N/A',
-          pat: ipo.financials.pat?.fy25 ? `₹${ipo.financials.pat.fy25.toLocaleString('en-IN')} Cr` : 'N/A',
-          eps: ipo.kpi?.prePost?.eps?.pre ? `₹${ipo.kpi.prePost.eps.pre}` : 'N/A',
-          debtToEquity: ipo.financials.debtEquity?.fy25 ? `${ipo.financials.debtEquity.fy25}` : 'N/A'
-        },
-        {
-          year: 'FY26',
-          revenue: ipo.financials.revenue?.fy26 ? `₹${ipo.financials.revenue.fy26.toLocaleString('en-IN')} Cr` : 'N/A',
-          ebitda: ipo.financials.ebitda?.fy26 ? `₹${ipo.financials.ebitda.fy26.toLocaleString('en-IN')} Cr` : 'N/A',
-          pat: ipo.financials.pat?.fy26 ? `₹${ipo.financials.pat.fy26.toLocaleString('en-IN')} Cr` : 'N/A',
-          eps: ipo.kpi?.prePost?.eps?.post ? `₹${ipo.kpi.prePost.eps.post}` : 'N/A',
-          debtToEquity: ipo.financials.debtEquity?.fy26 ? `${ipo.financials.debtEquity.fy26}` : 'N/A'
-        }
-      ] : [];
-
-      const cleanStrengths = (ipo.greenFlags || []).filter(f => f && !f.includes('=== END ==='));
-      const cleanRisks = (ipo.redFlags || []).filter(f => f && !f.includes('=== END ==='));
-
-      return {
-        id: ipo.id,
-        companyName: ipo.name,
-        slug: targetSlug,
-        symbol: ipo.abbr || 'JIO',
-        logoUrl: ipo.logoUrl && ipo.logoUrl !== 'NA' ? ipo.logoUrl : null,
-        segment: ipo.exchange || 'Mainboard',
-        sector: ipo.sector || 'Telecom & Digital Services',
-        status: ipo.status === 'upcoming' ? 'upcoming' : (ipo.status === 'open' ? 'open' : 'closed'),
-        priceBand: `₹${priceMin.toLocaleString('en-IN')} – ₹${priceMax.toLocaleString('en-IN')}`,
-        minPrice: priceMin,
-        maxPrice: priceMax,
-        issueSize: ipo.issueSizeCr ? `₹${ipo.issueSizeCr.toLocaleString('en-IN')} Cr` : `₹${ipo.issueSize} Cr`,
-        lotSize,
-        lotSizeDisplay: `${lotSize} shares`,
-        shniLotSize: ipo.shniLotSize || null,
-        bhniLotSize: ipo.bhniLotSize || null,
-        minInvestment: priceMax * lotSize,
-        shniMinInvestment: ipo.shniLotSize ? priceMax * ipo.shniLotSize * lotSize : null,
-        bhniMinInvestment: ipo.bhniLotSize ? priceMax * ipo.bhniLotSize * lotSize : null,
-        faceValue: ipo.faceValue || 10,
-        marketCap: ipo.marketCap || 'N/A',
-        peRatio: ipo.peRatio || 'N/A',
-        gmp: {
-          value: gmpVal,
-          percent: gmpPct,
-          trend: gmpVal > 0 ? 'up' : (gmpVal < 0 ? 'down' : 'neutral'),
-          lastReported: ipo.gmpLastUpdated || 'Live',
-          fetchedAt: new Date().toISOString()
-        },
-        gmpHistory: Array.isArray(ipo.gmpHistory) && ipo.gmpHistory.length > 0 ? ipo.gmpHistory : [
-          {
-            date: ipo.gmpLastUpdated || new Date().toISOString(),
-            gmp: gmpVal,
-            gmpPercent: gmpPct,
-            source: 'Live'
-          }
-        ],
-        subscription: {
-          overall: ipo.subscription?.total || '0x',
-          retail: ipo.subscription?.retail || '0x',
-          qib: ipo.subscription?.qib || '0x',
-          nii: ipo.subscription?.nii || ipo.subscription?.shni || '0x',
-          updatedAt: new Date().toISOString()
-        },
-        biddingDates: `${ipo.openDate} to ${ipo.closeDate}`,
-        openDate: ipo.openDate || 'TBA',
-        closeDate: ipo.closeDate || 'TBA',
-        allotmentDate: ipo.allotmentDate || 'TBA',
-        listingDate: ipo.listDate || 'TBA',
-        estimatedListingPrice: estList,
-        estimatedLotProfit: gmpVal * lotSize,
-        aiPrediction: {
-          predictedPrice: Math.round(priceMax * (1 + (ipo.aiPrediction || 0) / 100)),
-          estProfit: Math.round(priceMax * ((ipo.aiPrediction || 0) / 100) * lotSize),
-          percent: ipo.aiPrediction || 0,
-          confidence: ipo.aiConfidence || 50,
-          sentiment: ipo.sentimentLabel || 'Neutral'
-        },
-        leadManagers: ipo.leadManager ? ipo.leadManager.split(';').map(m => m.trim()) : ['Axis Capital', 'Kotak Mahindra', 'ICICI Securities'],
-        registrar: ipo.registrar || 'KFin Technologies Limited',
-        aboutCompany: ipo.aboutCompany || '',
-        strengths: cleanStrengths,
-        risks: cleanRisks,
-        financials: formattedFinancials,
-        rawFinancials: ipo.financials || null,
-        kpi: ipo.kpi || null,
-        issueDetails: ipo.issueDetails || null,
-        companyContactDetails: ipo.companyContactDetails || null,
-        riskLevel: gmpPct > 35 ? 'High Demand' : (gmpPct > 10 ? 'Moderate' : 'Speculative'),
-        isLiveExtracted: true,
-        source: 'Live',
-        updatedAt: new Date().toISOString()
-      };
+      return normalizeIpoItem({ ...rawIpo, slug: targetSlug });
     } catch (err) {
-      console.warn('[IPO Service] Detail fetch from IPOGyani failed:', err.message);
+      console.warn('[IPO Service] Detail fetch failed:', err.message);
       return null;
     }
   },
 
-  // Main Live Fetch: PURE IPOGyani
+  // Main Live Fetch
   async fetchLiveIPOs() {
     try {
-      console.log('[IPO Service] Fetching pure dynamic IPOs from IPOGyani...');
-      const gyaniList = await this.fetchFromIPOGyani();
+      console.log('[IPO Service] Fetching dynamic live IPOs...');
+      const list = await this.fetchFromIPOGyani();
 
-      if (gyaniList && gyaniList.length > 0) {
-        runtimeIPOs = gyaniList;
+      if (list && list.length > 0) {
+        runtimeIPOs = list;
 
         // Fetch deep detail for Jio Platforms if present
         const jioIndex = runtimeIPOs.findIndex(i => i.slug.includes('jio'));
-        if (jioIndex !== -1) {
+        if (jioIndex !== -1 && (!runtimeIPOs[jioIndex].gmpHistory || runtimeIPOs[jioIndex].gmpHistory.length <= 1)) {
           const jioDetail = await this.fetchIPODetailFromGyani('jio-platforms-tentative-ipo');
           if (jioDetail) {
             runtimeIPOs[jioIndex] = { ...runtimeIPOs[jioIndex], ...jioDetail };
@@ -326,7 +331,7 @@ export const ipoService = {
         }
 
         lastExtractedAt = new Date().toISOString();
-        console.log(`[IPO Service] Synchronized ${runtimeIPOs.length} pure IPOGyani IPOs!`);
+        console.log(`[IPO Service] Synchronized ${runtimeIPOs.length} live IPOs!`);
       }
 
       return runtimeIPOs;
@@ -337,6 +342,11 @@ export const ipoService = {
   },
 
   getAllIPOs(status = 'all') {
+    // Auto-refresh in background if cache is older than 60 seconds
+    if (!lastExtractedAt || (Date.now() - new Date(lastExtractedAt).getTime() > 60000)) {
+      this.fetchLiveIPOs().catch(() => {});
+    }
+
     if (!status || status === 'all') {
       return runtimeIPOs;
     }
@@ -360,12 +370,10 @@ export const ipoService = {
     if (!slug) return null;
     const existing = this.getIPOBySlug(slug);
 
-    // If existing already has full gmpHistory & financials, return it
     if (existing && existing.gmpHistory && existing.gmpHistory.length > 1 && existing.financials?.length > 0) {
       return existing;
     }
 
-    // Try fetching deep page from IPOGyani dynamically
     const dynamicDetail = await this.fetchIPODetailFromGyani(slug);
     if (dynamicDetail) {
       const idx = runtimeIPOs.findIndex(i => i.slug === dynamicDetail.slug || (slug.includes('jio') && i.slug.includes('jio')));
@@ -440,3 +448,12 @@ export const ipoService = {
 ipoService.fetchLiveIPOs().catch(err => {
   console.warn('[IPO Service] Initial background fetch postponed:', err.message);
 });
+
+// Automatic continuous background polling: Auto-fetch new IPOs and live GMP every 60s
+const AUTO_SYNC_INTERVAL_MS = 60 * 1000;
+setInterval(() => {
+  ipoService.fetchLiveIPOs().catch(err => {
+    console.warn('[IPO Service] Auto-sync background interval error:', err.message);
+  });
+}, AUTO_SYNC_INTERVAL_MS);
+

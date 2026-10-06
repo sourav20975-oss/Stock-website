@@ -18,6 +18,34 @@ import {
 import { api } from '../services/api';
 import GMPBadge from '../components/ipo/GMPBadge';
 
+function formatBiddingDatesDisplay(dates, openDate, closeDate) {
+  if (openDate && closeDate && openDate !== 'TBA' && closeDate !== 'TBA') {
+    try {
+      const o = new Date(openDate);
+      const c = new Date(closeDate);
+      if (!isNaN(o.getTime()) && !isNaN(c.getTime())) {
+        const oDay = o.getDate();
+        const oMonth = o.toLocaleDateString('en-IN', { month: 'short' });
+        const cDay = c.getDate();
+        const cMonth = c.toLocaleDateString('en-IN', { month: 'short' });
+        const cYear = c.getFullYear();
+        if (o.getFullYear() === c.getFullYear()) {
+          if (oMonth === cMonth) return `${oDay} – ${cDay} ${cMonth} ${cYear}`;
+          return `${oDay} ${oMonth} – ${cDay} ${cMonth} ${cYear}`;
+        }
+        return `${oDay} ${oMonth} ${o.getFullYear()} – ${cDay} ${cMonth} ${cYear}`;
+      }
+    } catch {}
+  }
+
+  if (typeof dates === 'string' && dates.includes(' to ')) {
+    const [s, e] = dates.split(' to ');
+    return formatBiddingDatesDisplay(null, s.trim(), e.trim());
+  }
+
+  return dates || 'Announced';
+}
+
 export default function IPOList() {
   const [ipos, setIpos] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -37,11 +65,18 @@ export default function IPOList() {
   ];
 
   useEffect(() => {
-    fetchIPOs();
+    fetchIPOs(true);
+
+    // Auto-fetch new IPOs & GMP updates every 20 seconds automatically
+    const interval = setInterval(() => {
+      fetchIPOs(false);
+    }, 20000);
+
+    return () => clearInterval(interval);
   }, [statusFilter]);
 
-  const fetchIPOs = async () => {
-    setLoading(true);
+  const fetchIPOs = async (isInitial = true) => {
+    if (isInitial) setLoading(true);
     try {
       const res = await api.getIPOs(statusFilter === 'all' ? '' : statusFilter);
       if (res.success) {
@@ -53,7 +88,7 @@ export default function IPOList() {
     } catch (err) {
       console.error('Error fetching IPOs:', err);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
@@ -198,6 +233,30 @@ export default function IPOList() {
               {feedback}
             </span>
           )}
+
+          {/* Auto-Sync Live Indicator */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            padding: '6px 10px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'rgba(8, 153, 129, 0.08)',
+            border: '1px solid rgba(8, 153, 129, 0.25)',
+            fontSize: '11px',
+            fontWeight: 700,
+            color: 'var(--positive)',
+            whiteSpace: 'nowrap'
+          }}>
+            <span style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--positive)',
+              animation: 'pulse 1.8s infinite'
+            }} />
+            <span>Auto-Sync Live</span>
+          </div>
 
           {/* Sync Button */}
           <button
@@ -715,8 +774,22 @@ export default function IPOList() {
                       </td>
 
                       {/* 7. Bidding Dates */}
-                      <td style={{ padding: '12px 14px', color: 'var(--text-secondary)', fontSize: '11.5px', whiteSpace: 'nowrap' }}>
-                        {ipo.biddingDates || `${ipo.openDate || 'TBA'} – ${ipo.closeDate || 'TBA'}`}
+                      <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '4px 9px',
+                          borderRadius: '6px',
+                          backgroundColor: 'var(--surface-secondary)',
+                          border: '1px solid var(--border)',
+                          fontSize: '11.5px',
+                          fontWeight: 600,
+                          color: 'var(--text)'
+                        }}>
+                          <Calendar size={12} color="var(--primary)" />
+                          <span>{formatBiddingDatesDisplay(ipo.biddingDates, ipo.openDate, ipo.closeDate)}</span>
+                        </div>
                       </td>
 
                       {/* 8. Status */}

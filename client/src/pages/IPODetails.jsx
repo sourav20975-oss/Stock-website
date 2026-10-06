@@ -8,6 +8,21 @@ import SubscriptionTable from '../components/ipo/SubscriptionTable';
 import IPOFinancials from '../components/ipo/IPOFinancials';
 import AIResearchWidget from '../components/ai/AIResearchWidget';
 
+function formatDisplayDate(dateStr) {
+  if (!dateStr || dateStr === 'TBA' || dateStr === 'Announced') return 'TBA';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 export default function IPODetails() {
   const { slug } = useParams();
   const [ipo, setIpo] = useState(null);
@@ -377,19 +392,19 @@ export default function IPODetails() {
             </div>
             <div>
               <span style={{ color: 'var(--text-muted)' }}>Bidding Opens:</span>
-              <div style={{ fontWeight: 600, color: 'var(--text)', marginTop: '2px' }}>{ipo.openDate}</div>
+              <div style={{ fontWeight: 600, color: 'var(--text)', marginTop: '2px' }}>{formatDisplayDate(ipo.openDate)}</div>
             </div>
             <div>
               <span style={{ color: 'var(--text-muted)' }}>Bidding Closes:</span>
-              <div style={{ fontWeight: 600, color: 'var(--text)', marginTop: '2px' }}>{ipo.closeDate}</div>
+              <div style={{ fontWeight: 600, color: 'var(--text)', marginTop: '2px' }}>{formatDisplayDate(ipo.closeDate)}</div>
             </div>
             <div>
               <span style={{ color: 'var(--text-muted)' }}>Allotment Date:</span>
-              <div style={{ fontWeight: 600, color: 'var(--text)', marginTop: '2px' }}>{ipo.allotmentDate}</div>
+              <div style={{ fontWeight: 600, color: 'var(--text)', marginTop: '2px' }}>{formatDisplayDate(ipo.allotmentDate)}</div>
             </div>
             <div>
               <span style={{ color: 'var(--text-muted)' }}>Tentative Listing:</span>
-              <div style={{ fontWeight: 600, color: 'var(--text)', marginTop: '2px' }}>{ipo.listingDate}</div>
+              <div style={{ fontWeight: 600, color: 'var(--text)', marginTop: '2px' }}>{formatDisplayDate(ipo.listingDate)}</div>
             </div>
           </div>
 
